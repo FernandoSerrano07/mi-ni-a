@@ -1,11 +1,11 @@
-{% from "_deco.html" import gerbera, tulip %}
+{% from "_deco.html" import gerbera, tulip, book %}
 {% macro card(r, estado) %}
 <article class="rem {{ estado }} {% if highlight == r.id %}highlight{% endif %}" id="r{{ r.id }}">
   {% set colores = ["#f472b6", "#a78bfa", "#fb923c", "#c084fc", "#facc15"] %}
   <span class="rem-flower">{{ gerbera(colores[r.id % 5], size=34, stem=False) }}</span>
   <div class="rem-main">
     <div class="rem-title">
-      {% if r.kind == 'checkin' %}❓{% else %}📌{% endif %} {{ r.title }}
+      {% if r.kind == 'checkin' %}{{ book("#8b5cf6", 22) }}{% else %}📌{% endif %} {{ r.title }}
     </div>
     <div class="rem-meta">
       {% if estado == 'done' %}

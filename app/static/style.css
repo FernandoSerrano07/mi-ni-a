@@ -128,3 +128,19 @@ legend { font-weight: 700; padding: 0 6px; }
 @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .deco, .deco * { animation: none !important; } }
+
+/* Gatitos y libros */
+.tabs { position: relative; margin-top: 34px; }
+.peek-cat { position: absolute; right: 22px; top: -33px; z-index: 0; }
+.tabs a { position: relative; z-index: 1; }
+.peek-cat { animation: peek 6s ease-in-out infinite; transform-origin: bottom center; }
+@keyframes peek { 0%, 70%, 100% { transform: translateY(0); } 80% { transform: translateY(3px) rotate(-4deg); } 90% { transform: translateY(0) rotate(3deg); } }
+.nap { display: flex; align-items: flex-end; justify-content: center; gap: 0; }
+.nap .kitten { margin-left: -14px; margin-bottom: 4px; }
+.settings-card { position: relative; }
+.settings-cat { position: absolute; right: 10px; top: -36px; }
+.form-friends { display: flex; align-items: flex-end; }
+.form-friends .kitten { margin-right: -8px; }
+.rem-title .book { margin-top: -3px; }
+.kitten.sentado .tail { transform-origin: 70px 96px; animation: tail 2.4s ease-in-out infinite alternate; }
+@keyframes tail { from { transform: rotate(-6deg); } to { transform: rotate(8deg); } }

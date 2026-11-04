@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% from "_deco.html" import penguin, gerbera, tulip, garden %}
+{% from "_deco.html" import penguin, gerbera, tulip, garden, kitten, book, book_stack %}
 {% block title %}{{ 'Editar' if r else 'Nuevo' }} recordatorio{{ garden() }}
 {% endblock %}
 {% block content %}
 <a href="{{ url_for('main.index') }}" class="back">← Volver</a>
 <div class="form-head">
   <h1>{{ 'Editar recordatorio' if r else 'Nuevo recordatorio' }}</h1>
-  {{ penguin("tulipan", 70) }}
+  <div class="form-friends">{{ kitten("sentado", "gris", 54) }}{{ penguin("libro", 66) }}</div>
 </div>
 
 {% if not r %}

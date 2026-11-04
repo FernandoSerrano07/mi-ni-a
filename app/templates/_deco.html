@@ -42,12 +42,15 @@
   <ellipse cx="47" cy="129" rx="11" ry="5.5" fill="#fb923c"/>
   <ellipse cx="73" cy="129" rx="11" ry="5.5" fill="#fb923c"/>
   <!-- aletas -->
-  {% if variant == "hola" %}
+  {% if variant == "libro" %}
+  {% elif variant == "hola" %}
   <g class="wave"><path d="M95 72 C110 58 116 44 112 40 C106 42 96 56 90 72 Z" fill="#2e2a4f"/></g>
   {% else %}
   <path d="M93 70 C104 86 106 102 101 106 C95 100 90 88 88 76 Z" fill="#2e2a4f"/>
   {% endif %}
+  {% if variant != "libro" %}
   <path d="M27 70 C16 86 14 102 19 106 C25 100 30 88 32 76 Z" fill="#2e2a4f"/>
+  {% endif %}
   <!-- cuerpo -->
   <ellipse cx="60" cy="84" rx="38" ry="46" fill="#2e2a4f"/>
   <ellipse cx="60" cy="94" rx="27" ry="34" fill="#fffdfb"/>
@@ -65,6 +68,13 @@
   {% elif variant == "feliz" %}
   <path d="M43 52 Q48 46 53 52" stroke="#2e2a4f" stroke-width="2.8" fill="none" stroke-linecap="round"/>
   <path d="M67 52 Q72 46 77 52" stroke="#2e2a4f" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+  {% elif variant == "libro" %}
+  <circle cx="49" cy="53" r="4.6" fill="#2e2a4f"/><circle cx="71" cy="53" r="4.6" fill="#2e2a4f"/>
+  <circle cx="50.5" cy="51.5" r="1.6" fill="#fff"/><circle cx="72.5" cy="51.5" r="1.6" fill="#fff"/>
+  <g fill="none" stroke="#7c3aed" stroke-width="2.4">
+    <circle cx="49" cy="52" r="9"/><circle cx="71" cy="52" r="9"/>
+    <path d="M58 51 Q60 49 62 51"/><path d="M40 50 L33 46"/><path d="M80 50 L87 46"/>
+  </g>
   {% else %}
   <circle cx="49" cy="50" r="5" fill="#2e2a4f"/><circle cx="71" cy="50" r="5" fill="#2e2a4f"/>
   <circle cx="50.8" cy="48.2" r="1.8" fill="#fff"/><circle cx="72.8" cy="48.2" r="1.8" fill="#fff"/>
@@ -80,6 +90,20 @@
     <path d="M0 0 L11 -7 L11 7 Z" fill="#a855f7"/>
     <circle r="3.4" fill="#7e22ce"/>
   </g>
+  {% if variant == "libro" %}
+  <!-- lee un libro morado abierto -->
+  <path d="M26 90 L60 97 L94 90 L94 120 L60 127 L26 120 Z" fill="#7c3aed"/>
+  <path d="M29 87 L60 93 L60 122 L29 116 Z" fill="#fffdfb"/>
+  <path d="M91 87 L60 93 L60 122 L91 116 Z" fill="#f5f0ff"/>
+  <g stroke="#c4b5fd" stroke-width="1.6" stroke-linecap="round">
+    <path d="M35 95 L54 99"/><path d="M35 101 L54 105"/><path d="M35 107 L50 110"/>
+    <path d="M66 99 L85 95"/><path d="M66 105 L85 101"/><path d="M66 111 L80 108"/>
+  </g>
+  <path d="M60 93 L60 122" stroke="#a78bfa" stroke-width="1.4"/>
+  <path d="M76 113 c-2-3-6-1-4 2 l4 4 l4-4 c2-3-2-5-4-2z" fill="#f472b6"/>
+  <ellipse cx="27" cy="104" rx="7" ry="11" fill="#2e2a4f" transform="rotate(20 27 104)"/>
+  <ellipse cx="93" cy="104" rx="7" ry="11" fill="#2e2a4f" transform="rotate(-20 93 104)"/>
+  {% endif %}
   {% if variant == "tulipan" %}
   <!-- sostiene un tulipán -->
   <g transform="translate(86 62)">
@@ -99,10 +123,101 @@
   {{ gerbera("#f472b6", size=44) }}
   {{ tulip("#a855f7", "#6b21a8", 36, 4) }}
   {{ gerbera("#fb923c", size=38) }}
-  {{ tulip("#f0abfc", "#c026d3", 28, -3) }}
+  {{ kitten("sentado", "naranja", 58, "garden-cat") }}
   {{ gerbera("#a78bfa", size=46) }}
+  {{ book_stack(44) }}
   {{ tulip("#ec4899", "#be185d", 32, 6) }}
   {{ gerbera("#facc15", "#6b3d12", 40) }}
-  {{ tulip("#8b5cf6", "#5b21b6", 34, -4) }}
 </div>
+{% endmacro %}
+
+
+{# Gatitos. pelaje: "naranja", "gris", "crema". variant: "sentado", "durmiendo", "asomado" #}
+{% macro _fur(pelaje) -%}
+{%- set c = {"naranja": ("#f6ad55", "#dd8a2e", "#fff3e0"), "gris": ("#a3a9b8", "#7d8495", "#f1f2f6"), "crema": ("#fbe7c6", "#e9c48f", "#fffaf0")} -%}
+{{ (c[pelaje] if pelaje in c else c["naranja"])|join(",") }}
+{%- endmacro %}
+
+{% macro kitten(variant="sentado", pelaje="naranja", size=80, cls="") %}
+{% set f = _fur(pelaje).split(",") %}
+{% set fur, stripe, light = f[0], f[1], f[2] %}
+{% if variant == "asomado" %}
+<svg class="deco kitten asomado {{ cls }}" width="{{ size }}" height="{{ (size * 0.62)|int }}" viewBox="0 0 100 62" aria-hidden="true">
+  <path d="M22 24 L18 2 L38 14 Z" fill="{{ fur }}"/><path d="M24 20 L22 8 L33 15 Z" fill="#f9a8d4"/>
+  <path d="M78 24 L82 2 L62 14 Z" fill="{{ fur }}"/><path d="M76 20 L78 8 L67 15 Z" fill="#f9a8d4"/>
+  <ellipse cx="50" cy="38" rx="32" ry="27" fill="{{ fur }}"/>
+  <path d="M44 13 L46 22 M50 12 L50 22 M56 13 L54 22" stroke="{{ stripe }}" stroke-width="3" stroke-linecap="round"/>
+  <ellipse cx="50" cy="46" rx="15" ry="10" fill="{{ light }}"/>
+  <circle cx="38" cy="36" r="5.4" fill="#2e2a4f"/><circle cx="62" cy="36" r="5.4" fill="#2e2a4f"/>
+  <circle cx="40" cy="34" r="2" fill="#fff"/><circle cx="64" cy="34" r="2" fill="#fff"/>
+  <path d="M47 43 L53 43 L50 46.5 Z" fill="#f472b6"/>
+  <path d="M44 48 Q47 51 50 47.5 Q53 51 56 48" stroke="#2e2a4f" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  <ellipse cx="30" cy="45" rx="5" ry="3" fill="#f9a8d4" opacity=".75"/><ellipse cx="70" cy="45" rx="5" ry="3" fill="#f9a8d4" opacity=".75"/>
+  <g stroke="#2e2a4f" stroke-width="1" opacity=".45"><path d="M28 42 L10 39"/><path d="M28 46 L11 47"/><path d="M72 42 L90 39"/><path d="M72 46 L89 47"/></g>
+  <!-- patitas sobre el borde -->
+  <ellipse cx="30" cy="58" rx="10" ry="6" fill="{{ fur }}"/><ellipse cx="70" cy="58" rx="10" ry="6" fill="{{ fur }}"/>
+  <g stroke="{{ stripe }}" stroke-width="1.3"><path d="M27 55 L27 60"/><path d="M33 55 L33 60"/><path d="M67 55 L67 60"/><path d="M73 55 L73 60"/></g>
+</svg>
+{% elif variant == "durmiendo" %}
+<svg class="deco kitten durmiendo {{ cls }}" width="{{ size }}" height="{{ (size * 0.62)|int }}" viewBox="0 0 100 62" aria-hidden="true">
+  <ellipse cx="52" cy="58" rx="40" ry="4" fill="#5b21b6" opacity=".10"/>
+  <ellipse cx="56" cy="40" rx="36" ry="19" fill="{{ fur }}"/>
+  <path d="M40 24 Q44 30 42 38 M54 22 Q57 30 55 38 M68 24 Q70 31 68 38" stroke="{{ stripe }}" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M90 42 C96 54 70 60 44 56" stroke="{{ fur }}" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <path d="M86 50 L80 54 M74 55 L70 58" stroke="{{ stripe }}" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M14 30 L13 12 L26 22 Z" fill="{{ fur }}"/><path d="M16 26 L16 17 L23 22 Z" fill="#f9a8d4"/>
+  <path d="M40 28 L44 11 L31 20 Z" fill="{{ fur }}"/><path d="M38 25 L41 16 L34 21 Z" fill="#f9a8d4"/>
+  <ellipse cx="27" cy="38" rx="19" ry="16" fill="{{ fur }}"/>
+  <ellipse cx="27" cy="44" rx="10" ry="6.5" fill="{{ light }}"/>
+  <path d="M17 36 Q20.5 39 24 36" stroke="#2e2a4f" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <path d="M30 36 Q33.5 39 37 36" stroke="#2e2a4f" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <path d="M25 42 L29 42 L27 44.5 Z" fill="#f472b6"/>
+  <ellipse cx="14" cy="42" rx="3.5" ry="2.2" fill="#f9a8d4" opacity=".8"/><ellipse cx="40" cy="42" rx="3.5" ry="2.2" fill="#f9a8d4" opacity=".8"/>
+  <ellipse cx="24" cy="54" rx="8" ry="4.5" fill="{{ fur }}"/>
+  <text x="44" y="14" font-size="11" font-weight="700" fill="#a78bfa" font-family="system-ui">z</text>
+  <text x="53" y="7" font-size="8" font-weight="700" fill="#c4b5fd" font-family="system-ui">z</text>
+</svg>
+{% else %}
+<svg class="deco kitten sentado {{ cls }}" width="{{ size }}" height="{{ (size * 1.1)|int }}" viewBox="0 0 100 110" aria-hidden="true">
+  <ellipse cx="50" cy="106" rx="28" ry="4" fill="#5b21b6" opacity=".10"/>
+  <path class="tail" d="M70 96 C92 96 96 72 84 62" stroke="{{ fur }}" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <ellipse cx="50" cy="80" rx="25" ry="25" fill="{{ fur }}"/>
+  <ellipse cx="50" cy="86" rx="14" ry="17" fill="{{ light }}"/>
+  <path d="M28 30 L24 6 L44 20 Z" fill="{{ fur }}"/><path d="M30 26 L28 13 L39 20 Z" fill="#f9a8d4"/>
+  <path d="M72 30 L76 6 L56 20 Z" fill="{{ fur }}"/><path d="M70 26 L72 13 L61 20 Z" fill="#f9a8d4"/>
+  <ellipse cx="50" cy="42" rx="28" ry="24" fill="{{ fur }}"/>
+  <path d="M44 19 L46 27 M50 18 L50 27 M56 19 L54 27" stroke="{{ stripe }}" stroke-width="3" stroke-linecap="round"/>
+  <ellipse cx="50" cy="50" rx="13" ry="9" fill="{{ light }}"/>
+  <circle cx="39" cy="40" r="5" fill="#2e2a4f"/><circle cx="61" cy="40" r="5" fill="#2e2a4f"/>
+  <circle cx="40.8" cy="38.2" r="1.8" fill="#fff"/><circle cx="62.8" cy="38.2" r="1.8" fill="#fff"/>
+  <path d="M47 47 L53 47 L50 50.5 Z" fill="#f472b6"/>
+  <path d="M44 52 Q47 55 50 51.5 Q53 55 56 52" stroke="#2e2a4f" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  <ellipse cx="31" cy="49" rx="5" ry="3" fill="#f9a8d4" opacity=".75"/><ellipse cx="69" cy="49" rx="5" ry="3" fill="#f9a8d4" opacity=".75"/>
+  <g stroke="#2e2a4f" stroke-width="1" opacity=".45"><path d="M30 46 L12 43"/><path d="M30 50 L13 51"/><path d="M70 46 L88 43"/><path d="M70 50 L87 51"/></g>
+  <!-- collar morado con cascabel -->
+  <path d="M33 62 Q50 70 67 62" stroke="#8b5cf6" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <circle cx="50" cy="68" r="3.6" fill="#facc15"/>
+  <ellipse cx="40" cy="102" rx="8" ry="5" fill="{{ fur }}"/><ellipse cx="60" cy="102" rx="8" ry="5" fill="{{ fur }}"/>
+</svg>
+{% endif %}
+{% endmacro %}
+
+{# Libro pequeño (ícono) #}
+{% macro book(color="#8b5cf6", size=22, cls="") %}
+<svg class="deco book {{ cls }}" width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M3 5 Q7 3.5 12 5.5 Q17 3.5 21 5 L21 19 Q17 17.5 12 19.5 Q7 17.5 3 19 Z" fill="{{ color }}"/>
+  <path d="M4.5 5.6 Q8 4.6 11.3 6.2 L11.3 18.2 Q8 16.8 4.5 17.6 Z" fill="#fff"/>
+  <path d="M19.5 5.6 Q16 4.6 12.7 6.2 L12.7 18.2 Q16 16.8 19.5 17.6 Z" fill="#f5f0ff"/>
+  <path d="M6 9 L10 9.8 M6 12 L10 12.8 M14 9.8 L18 9 M14 12.8 L18 12" stroke="#c4b5fd" stroke-width="1" stroke-linecap="round"/>
+</svg>
+{% endmacro %}
+
+{# Pila de libros #}
+{% macro book_stack(size=54, cls="") %}
+<svg class="deco books {{ cls }}" width="{{ size }}" height="{{ (size * 0.9)|int }}" viewBox="0 0 60 54" aria-hidden="true">
+  <rect x="6" y="40" width="48" height="12" rx="2.5" fill="#7c3aed"/><rect x="9" y="43" width="42" height="2" fill="#c4b5fd"/>
+  <rect x="10" y="28" width="42" height="12" rx="2.5" fill="#f472b6"/><rect x="13" y="31" width="36" height="2" fill="#fde2f0"/>
+  <rect x="4" y="16" width="44" height="12" rx="2.5" fill="#a78bfa" transform="rotate(-4 26 22)"/>
+  <path d="M30 14 c-3-5-10-2-7 3 l7 7 l7-7 c3-5-4-8-7-3z" fill="#e879f9" transform="translate(10 -10) scale(.8)"/>
+</svg>
 {% endmacro %}

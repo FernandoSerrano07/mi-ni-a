@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_deco.html" import penguin, gerbera, tulip, garden %}
+{% from "_deco.html" import penguin, gerbera, tulip, garden, kitten, book, book_stack %}
 {% from "_card.html" import card with context %}
 {% block content %}
 
@@ -14,6 +14,7 @@
 </section>
 
 <nav class="tabs">
+  {{ kitten("asomado", "naranja", 62, "peek-cat") }}
   <a href="?ver=mios" class="{{ 'on' if ver == 'mios' }}">Míos</a>
   <a href="?ver=todos" class="{{ 'on' if ver == 'todos' }}">Todos</a>
 </nav>
@@ -32,7 +33,7 @@
 <h2 class="sec">Próximos</h2>
 {% for r in proximos %}{{ card(r, 'proximo') }}{% else %}
 <div class="empty">
-  {{ penguin("durmiendo", 120) }}
+  <div class="nap">{{ penguin("durmiendo", 110) }}{{ kitten("durmiendo", "gris", 96) }}</div>
   <div>Nada pendiente, a descansar 💜</div>
   <span class="muted">Toca el botón + para crear un recordatorio</span>
 </div>
@@ -47,7 +48,8 @@
 
 <details class="settings">
   <summary>⚙️ Ajustes</summary>
-  <div class="card">
+  <div class="card settings-card">
+    {{ kitten("durmiendo", "crema", 70, "settings-cat") }}
     <label class="switch"><input type="checkbox" id="voice-toggle"> Leer en voz alta los recordatorios cuando la app esté abierta</label>
     <button id="push-test" class="btn">Enviar notificación de prueba</button>
     <p class="muted small" id="push-status"></p>
