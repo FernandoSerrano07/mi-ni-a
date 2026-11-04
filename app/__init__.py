@@ -1,4 +1,5 @@
 import logging
+import os
 
 import click
 from dotenv import load_dotenv
@@ -35,6 +36,7 @@ def create_app(config_overrides: dict | None = None, start_scheduler: bool = Fal
 
     with app.app_context():
         db.create_all()
+        _bootstrap_users(app)
 
     _register_cli(app)
 
@@ -44,6 +46,28 @@ def create_app(config_overrides: dict | None = None, start_scheduler: bool = Fal
         start_scheduler(app)
 
     return app
+
+
+def _bootstrap_users(app: Flask) -> None:
+    """Crea usuarios desde la variable USUARIOS="usuario:Nombre:contraseña;usuario2:Nombre2:contraseña2".
+    Solo crea los que no existen (no cambia contraseñas). Útil en hostings sin consola."""
+    raw = os.environ.get("USUARIOS", "").strip()
+    if not raw:
+        return
+    created = False
+    for item in raw.split(";"):
+        parts = item.strip().split(":", 2)
+        if len(parts) != 3 or not all(p.strip() for p in parts):
+            continue
+        username, name, password = (p.strip() for p in parts)
+        if not User.query.filter_by(username=username.lower()).first():
+            u = User(username=username.lower(), display_name=name)
+            u.set_password(password)
+            db.session.add(u)
+            created = True
+            logging.getLogger(__name__).info("Usuario creado desde USUARIOS: %s", username)
+    if created:
+        db.session.commit()
 
 
 def _register_cli(app: Flask) -> None:

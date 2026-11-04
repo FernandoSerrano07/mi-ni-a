@@ -11,7 +11,11 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: CRON_SECRET
-        generateValue: true
+        sync: false
+      - key: USUARIOS
+        sync: false
+      - key: PYTHON_VERSION
+        value: "3.12.8"
       - key: TIMEZONE
         value: America/El_Salvador
       - key: COOKIE_SECURE

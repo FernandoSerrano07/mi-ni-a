@@ -45,15 +45,16 @@ Las notificaciones push necesitan HTTPS (en `localhost` funcionan en Chrome de l
 
 ## Publicar (Render + Neon)
 
-1. Crea una base de datos en **Neon** y copia la *connection string* (`postgresql://...`).
-2. Ejecuta `python generar_vapid.py` en tu compu y guarda las dos llaves.
-3. En **Render**: *New → Blueprint* → elige este repo. Te pedirá `DATABASE_URL`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT` (`mailto:tu-correo`).
-4. Cuando termine, abre la **Shell** del servicio en Render y crea los usuarios:
-   ```bash
-   flask --app app crear-usuario yareni "Yareni"
-   flask --app app crear-usuario fernando "Fernando"
-   ```
-5. (Plan gratis) configura el cron de cron-job.org con el `CRON_SECRET` que Render generó.
+1. Crea una base de datos gratis en **[Neon](https://neon.tech)** y copia la *connection string* (`postgresql://...`).
+2. Genera las llaves de notificaciones con `python generar_vapid.py` (o pídeselas a quien te ayude a configurar).
+3. En **[Render](https://render.com)**: *New → Blueprint* → elige este repo. Te pedirá:
+   - `DATABASE_URL`: la URL de Neon
+   - `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (`mailto:tu-correo`)
+   - `CRON_SECRET`: una clave cualquiera larga
+   - `USUARIOS`: las cuentas, así → `yareni:Yareni:SuContraseña;fernando:Fernando:TuContraseña`
+     (se crean solas al arrancar; después puedes borrar esta variable)
+4. (Plan gratis) en **[cron-job.org](https://cron-job.org)** crea una tarea **cada minuto** a
+   `https://TU-APP.onrender.com/cron/tick?key=TU_CRON_SECRET`.
 
 ## Instalar en el teléfono
 

@@ -166,3 +166,11 @@ def test_paginas_renderizan(client):
     assert client.get("/nuevo").status_code == 200
     assert client.get("/sw.js").status_code == 200
     assert client.get("/manifest.webmanifest").status_code == 200
+
+
+def test_usuarios_desde_variable(monkeypatch):
+    monkeypatch.setenv("USUARIOS", "yareni:Yareni:clave1; fernando:Fernando:clave2")
+    app = create_app({"TESTING": True, "SQLALCHEMY_DATABASE_URI": "sqlite://"})
+    with app.app_context():
+        assert User.query.filter_by(username="yareni").first().check_password("clave1")
+        assert User.query.filter_by(username="fernando").first().display_name == "Fernando"
