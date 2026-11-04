@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="login">
+  <div class="login-logo">🔔</div>
+  <h1>Acuérdate</h1>
+  <p class="muted">Inicia sesión una vez y listo: el teléfono te recordará.</p>
+  <form method="post" class="card">
+    <label>Usuario
+      <input name="username" autocomplete="username" autocapitalize="none" required autofocus>
+    </label>
+    <label>Contraseña
+      <input name="password" type="password" autocomplete="current-password" required>
+    </label>
+    <button class="btn primary big" type="submit">Entrar</button>
+  </form>
+</div>
+{% endblock %}

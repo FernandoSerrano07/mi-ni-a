@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% from "_card.html" import card with context %}
+{% block content %}
+
+<!-- Aviso para activar notificaciones (app.js lo muestra/oculta) -->
+<section id="push-banner" class="banner" hidden>
+  <div>
+    <b>Activa las notificaciones</b>
+    <p id="push-help">Sin esto no te puedo avisar en el teléfono.</p>
+  </div>
+  <button id="push-enable" class="btn primary">Activar</button>
+</section>
+
+<nav class="tabs">
+  <a href="?ver=mios" class="{{ 'on' if ver == 'mios' }}">Míos</a>
+  <a href="?ver=todos" class="{{ 'on' if ver == 'todos' }}">Todos</a>
+</nav>
+
+{% if sonando %}
+<h2 class="sec hot">🔔 Esperando que confirmes</h2>
+{% for r in sonando %}{{ card(r, 'sonando') }}{% endfor %}
+{% endif %}
+
+{% if sin_confirmar %}
+<h2 class="sec warn">⚠️ No se confirmaron</h2>
+{% for r in sin_confirmar %}{{ card(r, 'missed') }}{% endfor %}
+{% endif %}
+
+<h2 class="sec">Próximos</h2>
+{% for r in proximos %}{{ card(r, 'proximo') }}{% else %}
+<div class="empty">Nada pendiente 🌤️<br><span class="muted">Toca el botón + para crear un recordatorio</span></div>
+{% endfor %}
+
+{% if hechos %}
+<details class="done-list">
+  <summary>✅ Hechos (últimos 3 días) · {{ hechos|length }}</summary>
+  {% for r in hechos %}{{ card(r, 'done') }}{% endfor %}
+</details>
+{% endif %}
+
+<details class="settings">
+  <summary>⚙️ Ajustes</summary>
+  <div class="card">
+    <label class="switch"><input type="checkbox" id="voice-toggle"> Leer en voz alta los recordatorios cuando la app esté abierta</label>
+    <button id="push-test" class="btn">Enviar notificación de prueba</button>
+    <p class="muted small" id="push-status"></p>
+    <form method="post" action="{{ url_for('main.logout') }}">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <button class="btn ghost">Cerrar sesión</button>
+    </form>
+  </div>
+</details>
+
+<a href="{{ url_for('main.form') }}" class="fab" aria-label="Nuevo recordatorio">+</a>
+{% endblock %}

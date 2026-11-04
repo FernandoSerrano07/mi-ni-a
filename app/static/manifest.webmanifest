@@ -1,0 +1,17 @@
+{
+  "name": "Acuérdate — Recordatorios",
+  "short_name": "Acuérdate",
+  "description": "Recordatorios con notificaciones y seguimiento",
+  "lang": "es",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff8f3",
+  "theme_color": "#f2643d",
+  "icons": [
+    { "src": "/static/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/static/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/static/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

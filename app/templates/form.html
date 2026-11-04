@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if r else 'Nuevo' }} recordatorio{% endblock %}
+{% block content %}
+<a href="{{ url_for('main.index') }}" class="back">← Volver</a>
+<h1>{{ 'Editar recordatorio' if r else 'Nuevo recordatorio' }}</h1>
+
+{% if not r %}
+<div class="chips" id="plantillas">
+  <span class="muted small">Ideas rápidas:</span>
+  <button type="button" class="chip" data-t="Ir por mi sobrina al colegio" data-k="reminder" data-ev="11:00" data-min="20" data-rep="weekdays">🎒 Sobrina al colegio</button>
+  <button type="button" class="chip" data-t="¿Terminaste tu tarea de matemática?" data-k="checkin" data-ex="19:00">📐 ¿Tarea de mate?</button>
+  <button type="button" class="chip" data-t="¿Ya estudiaste para tu parcial del sábado?" data-k="checkin" data-ex="18:00" data-rep="daily">📚 ¿Estudiaste?</button>
+  <button type="button" class="chip" data-t="Tomar agua 💧" data-k="reminder" data-ex="10:00" data-rep="daily">💧 Agua</button>
+</div>
+{% endif %}
+
+<form method="post" class="card form" id="rem-form">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+
+  <label>¿Qué hay que recordar?
+    <input name="titulo" id="titulo" value="{{ v.titulo or '' }}" placeholder="Ir por mi sobrina al colegio" required maxlength="200">
+  </label>
+
+  <div class="seg" role="radiogroup">
+    {% for k, label in KIND_CHOICES.items() %}
+    <label class="seg-opt"><input type="radio" name="tipo" value="{{ k }}" {{ 'checked' if v.tipo == k }}> {{ label }}</label>
+    {% endfor %}
+  </div>
+  <p class="muted small" id="tipo-help">Las preguntas de seguimiento insisten hasta que respondas “Sí, ya lo hice”.</p>
+
+  <label>Para
+    <select name="para">
+      {% for u in users %}<option value="{{ u.id }}" {{ 'selected' if v.para == u.id|string }}>{{ u.display_name }}{{ ' (yo)' if u.id == current_user.id }}</option>{% endfor %}
+    </select>
+  </label>
+
+  <div class="row">
+    <label>Día
+      <input type="date" name="fecha" value="{{ v.fecha }}" required>
+    </label>
+    <label>¿A qué hora es? <span class="muted small">(opcional)</span>
+      <input type="time" name="hora_evento" id="hora_evento" value="{{ v.hora_evento }}">
+    </label>
+  </div>
+
+  <fieldset class="aviso">
+    <legend>¿Cuándo te aviso?</legend>
+    <div class="seg" id="modo-aviso">
+      <label class="seg-opt"><input type="radio" name="modo_aviso" value="antes" {{ 'checked' if v.modo_aviso == 'antes' }}> Minutos antes</label>
+      <label class="seg-opt"><input type="radio" name="modo_aviso" value="exacta" {{ 'checked' if v.modo_aviso != 'antes' }}> A una hora exacta</label>
+    </div>
+
+    <div id="bloque-antes">
+      <div class="chips">
+        {% for m, txt in [(5,'5 min'),(10,'10 min'),(15,'15 min'),(20,'20 min'),(30,'30 min'),(60,'1 hora'),(120,'2 horas'),(1440,'1 día')] %}
+        <button type="button" class="chip min-chip" data-min="{{ m }}">{{ txt }}</button>
+        {% endfor %}
+      </div>
+      <label class="inline">o <input type="number" name="minutos_antes" id="minutos_antes" value="{{ v.minutos_antes }}" min="0" max="10080"> minutos antes</label>
+    </div>
+    <div id="bloque-exacta">
+      <label>Avisar a las
+        <input type="time" name="hora_aviso" id="hora_aviso" value="{{ v.hora_aviso }}">
+      </label>
+    </div>
+    <p class="preview" id="preview"></p>
+  </fieldset>
+
+  <label>Repetir
+    <select name="repetir" id="repetir">
+      {% for k, label in REPEAT_CHOICES.items() %}<option value="{{ k }}" {{ 'selected' if v.repetir == k }}>{{ label }}</option>{% endfor %}
+    </select>
+  </label>
+
+  <fieldset>
+    <legend>Si no lo marca como hecho…</legend>
+    <div class="row">
+      <label>Volver a avisar cada
+        <select name="insistir_cada">
+          {% for m in [0, 5, 10, 15, 30, 60] %}<option value="{{ m }}" {{ 'selected' if v.insistir_cada == m|string }}>{{ 'No insistir' if m == 0 else m ~ ' min' }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Hasta
+        <select name="insistir_veces">
+          {% for n in [1, 2, 3, 5, 8, 12] %}<option value="{{ n }}" {{ 'selected' if v.insistir_veces == n|string }}>{{ n }} {{ 'vez' if n == 1 else 'veces' }} más</option>{% endfor %}
+        </select>
+      </label>
+    </div>
+    <label class="switch"><input type="checkbox" name="avisar_creador" {{ 'checked' if v.avisar_creador }}> Si nunca confirma, avisarle a quien escribió el recordatorio</label>
+  </fieldset>
+
+  <label>Notas <span class="muted small">(opcional)</span>
+    <textarea name="notas" rows="2" placeholder="Llevar el suéter azul">{{ v.notas or '' }}</textarea>
+  </label>
+
+  <button class="btn primary big" type="submit">Guardar</button>
+</form>
+
+{% if r %}
+<form method="post" action="{{ url_for('main.reminder_action', rid=r.id, accion='eliminar') }}" onsubmit="return confirm('¿Eliminar este recordatorio?')">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <button class="btn danger ghost">Eliminar recordatorio</button>
+</form>
+{% endif %}
+{% endblock %}

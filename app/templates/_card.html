@@ -1,0 +1,46 @@
+{% macro card(r, estado) %}
+<article class="rem {{ estado }} {% if highlight == r.id %}highlight{% endif %}" id="r{{ r.id }}">
+  <div class="rem-main">
+    <div class="rem-title">
+      {% if r.kind == 'checkin' %}❓{% else %}📌{% endif %} {{ r.title }}
+    </div>
+    <div class="rem-meta">
+      {% if estado == 'done' %}
+        Hecho {{ r.done_at|dia|lower }} a las {{ r.done_at|hora }}
+      {% else %}
+        {{ r.notify_at|dia }} · aviso {{ r.notify_at|hora }}
+        {% if r.event_at %} · es a las <b>{{ r.event_at|hora }}</b>{% endif %}
+      {% endif %}
+    </div>
+    <div class="rem-tags">
+      {% if ver == 'todos' or r.owner_id != current_user.id %}<span class="tag">Para {{ r.owner.display_name }}</span>{% endif %}
+      {% if r.created_by_id != r.owner_id %}<span class="tag soft">De {{ r.created_by.display_name }}</span>{% endif %}
+      {% if r.repeat != 'none' %}<span class="tag soft">🔁 {{ REPEAT_CHOICES[r.repeat] }}</span>{% endif %}
+      {% if estado == 'sonando' %}<span class="tag hot">Avisado {{ r.sent_count }} {{ 'vez' if r.sent_count == 1 else 'veces' }}</span>{% endif %}
+      {% if r.followup_every_min and estado == 'proximo' %}<span class="tag soft">insiste c/{{ r.followup_every_min }} min</span>{% endif %}
+    </div>
+    {% if r.notes %}<div class="rem-notes">{{ r.notes }}</div>{% endif %}
+  </div>
+  <div class="rem-actions">
+    {% if estado in ('sonando', 'proximo', 'missed') %}
+      <form method="post" action="{{ url_for('main.reminder_action', rid=r.id, accion='hecho') }}">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <button class="btn ok">✓ Hecho</button>
+      </form>
+    {% endif %}
+    {% if estado == 'sonando' %}
+      <form method="post" action="{{ url_for('main.reminder_action', rid=r.id, accion='posponer') }}">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}"><input type="hidden" name="min" value="10">
+        <button class="btn">+10 min</button>
+      </form>
+    {% endif %}
+    {% if estado == 'done' and r.repeat == 'none' %}
+      <form method="post" action="{{ url_for('main.reminder_action', rid=r.id, accion='reactivar') }}">
+        <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+        <button class="btn ghost">Reactivar</button>
+      </form>
+    {% endif %}
+    <a class="btn ghost" href="{{ url_for('main.form', rid=r.id) }}">Editar</a>
+  </div>
+</article>
+{% endmacro %}
