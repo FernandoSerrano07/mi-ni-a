@@ -10,7 +10,7 @@ from .models import User, db
 
 login_manager = LoginManager()
 login_manager.login_view = "main.login"
-login_manager.login_message = "Inicia sesión para continuar"
+login_manager.login_message = None
 
 
 @login_manager.user_loader

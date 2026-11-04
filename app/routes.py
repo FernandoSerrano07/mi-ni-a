@@ -215,7 +215,7 @@ def reminder_action(rid, accion):
         r.mark_done(local_tz())
         if r.created_by_id != current_user.id:
             _notify_creator_done(r, current_user)
-        flash("¡Listo! 🎉", "ok")
+        flash("¡Listo, bien hecho! 💜", "ok")
     elif accion == "posponer":
         r.snooze(int(request.form.get("min", 10)))
         flash(f"Te lo recuerdo en {request.form.get('min', 10)} minutos ⏳", "ok")
@@ -296,7 +296,7 @@ def unsubscribe():
 @csrf_protect
 def test_push():
     n = send_to_user(current_user, {
-        "title": "🔔 ¡Así se verán tus recordatorios!",
+        "title": "🐧 ¡Así se verán tus recordatorios! 💜",
         "body": "Si ves esto, las notificaciones funcionan.",
         "tag": "test", "kind": "info", "url": "/", "speak": "Las notificaciones funcionan",
     })

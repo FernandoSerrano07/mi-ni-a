@@ -54,7 +54,7 @@ self.addEventListener("notificationclick", (event) => {
         body: JSON.stringify({ token: data.token, action: event.action, minutes: 10 }),
       }).then(async (res) => {
         if (event.action === "done" && res.ok) {
-          await self.registration.showNotification("¡Bien hecho! 🎉", {
+          await self.registration.showNotification("¡Bien hecho! 🐧💜", {
             body: data.title ? `Marcado como hecho` : "", tag: "ok-" + (data.reminder_id || ""),
             icon: "/static/icons/icon-192.png", badge: "/static/icons/badge-96.png",
           });

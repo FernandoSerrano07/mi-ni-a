@@ -1,10 +1,12 @@
 {% extends "base.html" %}
+{% from "_deco.html" import penguin, gerbera, tulip, garden %}
 {% from "_card.html" import card with context %}
 {% block content %}
 
 <!-- Aviso para activar notificaciones (app.js lo muestra/oculta) -->
 <section id="push-banner" class="banner" hidden>
-  <div>
+  {{ penguin("hola", 64, "banner-peng") }}
+  <div class="banner-text">
     <b>Activa las notificaciones</b>
     <p id="push-help">Sin esto no te puedo avisar en el teléfono.</p>
   </div>
@@ -18,6 +20,7 @@
 
 {% if sonando %}
 <h2 class="sec hot">🔔 Esperando que confirmes</h2>
+<p class="cheer">{{ penguin("hola", 34) }} ¡Tú puedes! Márcalo cuando lo termines</p>
 {% for r in sonando %}{{ card(r, 'sonando') }}{% endfor %}
 {% endif %}
 
@@ -28,7 +31,11 @@
 
 <h2 class="sec">Próximos</h2>
 {% for r in proximos %}{{ card(r, 'proximo') }}{% else %}
-<div class="empty">Nada pendiente 🌤️<br><span class="muted">Toca el botón + para crear un recordatorio</span></div>
+<div class="empty">
+  {{ penguin("durmiendo", 120) }}
+  <div>Nada pendiente, a descansar 💜</div>
+  <span class="muted">Toca el botón + para crear un recordatorio</span>
+</div>
 {% endfor %}
 
 {% if hechos %}
@@ -50,6 +57,8 @@
     </form>
   </div>
 </details>
+
+{{ garden() }}
 
 <a href="{{ url_for('main.form') }}" class="fab" aria-label="Nuevo recordatorio">+</a>
 {% endblock %}

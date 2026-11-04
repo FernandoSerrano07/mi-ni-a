@@ -1,9 +1,10 @@
+{% from "_deco.html" import penguin, gerbera, tulip, garden %}
 <!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f2643d">
+  <meta name="theme-color" content="#8b5cf6">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Acuérdate">
@@ -18,13 +19,13 @@
   <div class="app">
     {% if current_user.is_authenticated %}
     <header class="top">
-      <a href="{{ url_for('main.index') }}" class="brand">🔔 Acuérdate</a>
-      <span class="hello">Hola, {{ current_user.display_name }}</span>
+      <a href="{{ url_for('main.index') }}" class="brand">{{ penguin("feliz", 38, "brand-peng") }}<span>Acuérdate</span></a>
+      <span class="hello">Hola, {{ current_user.display_name }} 💜 {{ gerbera("#f472b6", size=22, stem=False) }}</span>
     </header>
     {% endif %}
 
     {% with msgs = get_flashed_messages(with_categories=true) %}
-      {% for cat, m in msgs %}<div class="flash {{ cat }}">{{ m }}</div>{% endfor %}
+      {% for cat, m in msgs %}<div class="flash {{ cat }}">{% if cat == 'ok' %}{{ penguin("feliz", 30) }}{% endif %}<span>{{ m }}</span></div>{% endfor %}
     {% endwith %}
 
     <main>{% block content %}{% endblock %}</main>

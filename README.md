@@ -13,6 +13,7 @@ App web (Python + Flask) que se instala en el teléfono como una app y envía **
 - **Repetir**: diario, lunes a viernes o semanal (ideal para el colegio).
 - **Notificaciones que se notan**: se quedan en pantalla hasta tocarlas, vibran fuerte, vuelven a sonar en cada seguimiento y llevan prioridad alta.
 - **Lectura en voz alta** (opcional): si la app está abierta, lee el recordatorio en voz alta.
+- Diseño morado con tulipanes, gerberas y pingüinos (ilustraciones propias en SVG, sin imágenes externas).
 - Modo oscuro automático.
 
 ## ¿Firebase u otra cosa?

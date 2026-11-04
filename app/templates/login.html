@@ -1,9 +1,14 @@
 {% extends "base.html" %}
+{% from "_deco.html" import penguin, gerbera, tulip, garden %}
 {% block content %}
 <div class="login">
-  <div class="login-logo">🔔</div>
+  <div class="login-hero">
+    {{ tulip("#c084fc", "#9333ea", 34, -10, "hero-l") }}
+    {{ penguin("tulipan", 150) }}
+    {{ gerbera("#f472b6", size=50, cls="hero-r") }}
+  </div>
   <h1>Acuérdate</h1>
-  <p class="muted">Inicia sesión una vez y listo: el teléfono te recordará.</p>
+  <p class="muted">Inicia sesión una vez y listo: yo te recuerdo todo 💜</p>
   <form method="post" class="card">
     <label>Usuario
       <input name="username" autocomplete="username" autocapitalize="none" required autofocus>
@@ -13,5 +18,6 @@
     </label>
     <button class="btn primary big" type="submit">Entrar</button>
   </form>
+  {{ garden("login-garden") }}
 </div>
 {% endblock %}

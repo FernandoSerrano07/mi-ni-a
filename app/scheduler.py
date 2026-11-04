@@ -14,8 +14,8 @@ log = logging.getLogger(__name__)
 # Frases para cuando insiste (seguimiento), para que no se sienta robótico
 FOLLOWUP_PREFIXES = [
     "¿Ya lo hiciste? 👀",
-    "Recordatorio otra vez 🔔",
-    "No lo olvides 💛",
+    "El pingüino te recuerda 🐧",
+    "No lo olvides 💜",
     "Seguimos esperando ✅",
 ]
 

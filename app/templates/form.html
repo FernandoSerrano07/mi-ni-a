@@ -1,8 +1,13 @@
 {% extends "base.html" %}
-{% block title %}{{ 'Editar' if r else 'Nuevo' }} recordatorio{% endblock %}
+{% from "_deco.html" import penguin, gerbera, tulip, garden %}
+{% block title %}{{ 'Editar' if r else 'Nuevo' }} recordatorio{{ garden() }}
+{% endblock %}
 {% block content %}
 <a href="{{ url_for('main.index') }}" class="back">← Volver</a>
-<h1>{{ 'Editar recordatorio' if r else 'Nuevo recordatorio' }}</h1>
+<div class="form-head">
+  <h1>{{ 'Editar recordatorio' if r else 'Nuevo recordatorio' }}</h1>
+  {{ penguin("tulipan", 70) }}
+</div>
 
 {% if not r %}
 <div class="chips" id="plantillas">
@@ -93,7 +98,7 @@
     <textarea name="notas" rows="2" placeholder="Llevar el suéter azul">{{ v.notas or '' }}</textarea>
   </label>
 
-  <button class="btn primary big" type="submit">Guardar</button>
+  <button class="btn primary big" type="submit">Guardar 💜</button>
 </form>
 
 {% if r %}
