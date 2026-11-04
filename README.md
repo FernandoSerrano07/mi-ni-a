@@ -1,4 +1,6 @@
-# 🔔 Acuérdate — recordatorios con seguimiento
+# 🐧 La Pingüi 💜 — la ayuda de Yareni
+
+Recordatorios con notificaciones y seguimiento, hechos con cariño para Yareni.
 
 App web (Python + Flask) que se instala en el teléfono como una app y envía **notificaciones push** con **seguimiento**: si no se marca como hecho, vuelve a avisar cada X minutos y, si nunca se confirma, le avisa a quien escribió el recordatorio.
 
@@ -9,7 +11,7 @@ App web (Python + Flask) que se instala en el teléfono como una app y envía **
 - **Hora del evento + hora del aviso**: "la sobrina sale a las 11:00, avísame 20 min antes" → aviso a las 10:40. También puedes poner una hora exacta.
 - **Preguntas de seguimiento**: "¿Terminaste tu tarea de matemática?" con botones **✓ Sí, ya** / **Todavía no** dentro de la notificación.
 - **Insistir**: si no responde, vuelve a avisar cada 5/10/15… min hasta N veces.
-- **Aviso al creador**: si nunca confirma, te llega a ti "⚠️ Ana no confirmó: …". Y cuando lo marca como hecho, te llega "✅ Ana completó: …".
+- **Aviso al creador**: si nunca confirma, te llega a ti "⚠️ Yareni no confirmó: …". Y cuando lo marca como hecho, te llega "✅ Yareni completó: …".
 - **Repetir**: diario, lunes a viernes o semanal (ideal para el colegio).
 - **Notificaciones que se notan**: se quedan en pantalla hasta tocarlas, vibran fuerte, vuelven a sonar en cada seguimiento y llevan prioridad alta.
 - **Lectura en voz alta** (opcional): si la app está abierta, lee el recordatorio en voz alta.
@@ -34,8 +36,8 @@ python -m venv .venv && source .venv/bin/activate   # En Windows: .venv\Scripts\
 pip install -r requirements.txt
 cp .env.example .env
 python generar_vapid.py          # copia las 2 líneas al .env
-flask --app app crear-usuario ana "Ana"
-flask --app app crear-usuario carlos "Carlos"
+flask --app app crear-usuario yareni "Yareni"
+flask --app app crear-usuario fernando "Fernando"
 python run.py                    # abre http://localhost:5000
 ```
 
@@ -48,8 +50,8 @@ Las notificaciones push necesitan HTTPS (en `localhost` funcionan en Chrome de l
 3. En **Render**: *New → Blueprint* → elige este repo. Te pedirá `DATABASE_URL`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT` (`mailto:tu-correo`).
 4. Cuando termine, abre la **Shell** del servicio en Render y crea los usuarios:
    ```bash
-   flask --app app crear-usuario ana "Ana"
-   flask --app app crear-usuario carlos "Carlos"
+   flask --app app crear-usuario yareni "Yareni"
+   flask --app app crear-usuario fernando "Fernando"
    ```
 5. (Plan gratis) configura el cron de cron-job.org con el `CRON_SECRET` que Render generó.
 
@@ -58,7 +60,7 @@ Las notificaciones push necesitan HTTPS (en `localhost` funcionan en Chrome de l
 **Android (Chrome):** abre la página → inicia sesión → toca **Activar** notificaciones → menú ⋮ → **Instalar app**.
 
 **iPhone (iOS 16.4 o más):** abre en **Safari** → **Compartir** → **Agregar a pantalla de inicio** → abre la app *desde el ícono* → inicia sesión → **Activar**.
-En iPhone, revisa también *Ajustes → Notificaciones → Acuérdate* y ponlas como **Destacadas / Sensibles al tiempo** y fuera del modo *Concentración* para que se vean siempre.
+En iPhone, revisa también *Ajustes → Notificaciones → La Pingüi* y ponlas como **Destacadas / Sensibles al tiempo** y fuera del modo *Concentración* para que se vean siempre.
 
 Después toca **Ajustes → Enviar notificación de prueba** para confirmar.
 
