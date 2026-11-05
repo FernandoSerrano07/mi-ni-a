@@ -69,7 +69,9 @@
     {{ kitten("durmiendo", "crema", 70, "settings-cat") }}
     <label class="switch"><input type="checkbox" id="voice-toggle"> Leer en voz alta los recordatorios cuando la app esté abierta</label>
     <a class="btn" href="{{ url_for('main.settings') }}">☀️ Resúmenes y contraseña</a>
-    <a class="btn" href="{{ url_for('main.notes') }}">💌 Notitas</a>
+    <a class="btn" href="{{ url_for('extra.mailbox') }}">💌 Buzón de notas</a>
+    <a class="btn" href="{{ url_for('extra.study') }}">📚 Guías y cuestionarios</a>
+    <a class="btn" href="{{ url_for('main.notes') }}">🎁 Notitas sorpresa</a>
     <button id="push-test" class="btn">Enviar notificación de prueba</button>
     <p class="muted small" id="push-status"></p>
     <form method="post" action="{{ url_for('main.logout') }}">

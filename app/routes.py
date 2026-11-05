@@ -187,6 +187,9 @@ def form(rid=None):
         r.repeat = f.get("repetir") if f.get("repetir") in REPEAT_CHOICES else "none"
         if r.kind == "exam":
             r.repeat = "daily"
+            r.interval_days = max(1, min(7, int(f.get("cada_dias") or 1)))
+        else:
+            r.interval_days = 1
         r.followup_every_min = max(0, min(240, int(f.get("insistir_cada") or 0)))
         r.followup_max = max(0, min(20, int(f.get("insistir_veces") or 0)))
         r.notify_creator_on_miss = bool(f.get("avisar_creador"))
@@ -235,7 +238,7 @@ def _form_values(r: Reminder | None) -> dict:
         return {"fecha": now.strftime("%Y-%m-%d"), "hora_evento": "", "modo_aviso": "antes",
                 "minutos_antes": "20", "hora_aviso": "", "para": str(current_user.id), "tipo": "reminder",
                 "repetir": "none", "insistir_cada": "10", "insistir_veces": "3", "avisar_creador": "on",
-                "dias_antes": "5", "hora_pregunta": "18:00"}
+                "dias_antes": "5", "hora_pregunta": "18:00", "cada_dias": "1"}
     n = to_local(r.notify_at)
     e = to_local(r.event_at)
     mins = int((r.event_at - r.notify_at).total_seconds() // 60) if r.event_at else 0
@@ -248,6 +251,7 @@ def _form_values(r: Reminder | None) -> dict:
         "avisar_creador": "on" if r.notify_creator_on_miss else "",
         "dias_antes": str(max(0, (e.date() - n.date()).days)) if (e and r.kind == "exam") else "5",
         "hora_pregunta": n.strftime("%H:%M") if r.kind == "exam" else "18:00",
+        "cada_dias": str(r.interval_days or 1),
     }
 
 

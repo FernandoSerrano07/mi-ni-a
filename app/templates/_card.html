@@ -23,6 +23,7 @@
       {% if ver == 'todos' or r.owner_id != current_user.id %}<span class="tag">Para {{ r.owner.display_name }}</span>{% endif %}
       {% if r.created_by_id != r.owner_id %}<span class="tag soft">De {{ r.created_by.display_name }}</span>{% endif %}
       {% if r.repeat != 'none' and r.kind != 'exam' %}<span class="tag soft">🔁 {{ REPEAT_CHOICES[r.repeat] }}</span>{% endif %}
+      {% if r.kind == 'exam' and (r.interval_days or 1) > 1 %}<span class="tag soft">cada {{ r.interval_days }} días</span>{% endif %}
       {% if r.kind == 'exam' and r.done_count %}<span class="tag soft">📖 estudió {{ r.done_count }} {{ 'día' if r.done_count == 1 else 'días' }}</span>{% endif %}
       {% if estado == 'sonando' %}<span class="tag hot">Avisado {{ r.sent_count }} {{ 'vez' if r.sent_count == 1 else 'veces' }}</span>{% endif %}
       {% if r.followup_every_min and estado == 'proximo' %}<span class="tag soft">insiste c/{{ r.followup_every_min }} min</span>{% endif %}
@@ -47,6 +48,9 @@
         <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
         <button class="btn ghost">Reactivar</button>
       </form>
+    {% endif %}
+    {% if r.kind == 'exam' and estado != 'done' %}
+      <a class="btn" href="{{ url_for('extra.study', examen=r.id) }}">🧠 Guía y preguntas</a>
     {% endif %}
     <a class="btn ghost" href="{{ url_for('main.form', rid=r.id) }}">Editar</a>
   </div>

@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% from "_deco.html" import penguin, gerbera, tulip, garden, kitten %}
+{% block title %}Buzón 💌{% endblock %}
+
+{% macro bubble(m) %}
+<div class="bubble {{ 'mine' if m.author_id == current_user.id else 'theirs' }}" id="m{{ m.id }}">
+  {% if m.text %}<div class="bubble-text">{{ m.text }}</div>{% endif %}
+  {% if m.photo %}<a href="{{ url_for('extra.message_media', mid=m.id, kind='foto') }}" target="_blank">
+    <img class="bubble-photo" loading="lazy" src="{{ url_for('extra.message_media', mid=m.id, kind='foto') }}" alt="Foto"></a>{% endif %}
+  {% if m.audio %}<audio controls preload="none" src="{{ url_for('extra.message_media', mid=m.id, kind='audio') }}"></audio>{% endif %}
+  <div class="bubble-meta">{{ m.author.display_name }} · {{ m.created_at|dia }} {{ m.created_at|hora }}{% if m.author_id == current_user.id %} · {{ '✓✓ visto' if m.read_at else '✓ enviado' }}{% endif %}</div>
+</div>
+{% endmacro %}
+
+{% macro media_inputs(prefix) %}
+<div class="media-row">
+  <label class="btn media-btn">📷 Foto<input type="file" name="foto" accept="image/*" class="photo-input" hidden></label>
+  <button type="button" class="btn media-btn rec-btn">🎤 Audio</button>
+  <span class="rec-status muted small"></span>
+</div>
+<img class="photo-preview" hidden alt="">
+<audio class="audio-preview" controls hidden></audio>
+{% endmacro %}
+
+{% block content %}
+<a href="{{ url_for('main.index') }}" class="back">← Volver</a>
+<div class="form-head">
+  <h1>💌 Buzón</h1>
+  <div class="form-friends">{{ kitten("sentado", "naranja", 50) }}{{ penguin("feliz", 60) }}</div>
+</div>
+
+{% if others %}
+<form method="post" class="card form msg-form" enctype="multipart/form-data">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <label>Nota para
+    <select name="para">{% for u in others %}<option value="{{ u.id }}">{{ u.display_name }}</option>{% endfor %}</select>
+  </label>
+  <textarea name="texto" rows="3" maxlength="2000" placeholder="Escribe algo bonito… 💜"></textarea>
+  {{ media_inputs('new') }}
+  <button class="btn primary big">Enviar nota 💌</button>
+  <p class="muted small">Le aparece en una ventanita al entrar a la app y le llega una notificación.</p>
+</form>
+{% endif %}
+
+<h2 class="sec">Conversaciones</h2>
+{% for t in threads %}
+<section class="thread card">
+  {{ bubble(t) }}
+  {% for r in t.replies %}{{ bubble(r) }}{% endfor %}
+  <form method="post" action="{{ url_for('extra.reply', mid=t.id) }}" class="reply-form msg-form" enctype="multipart/form-data">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <textarea name="texto" rows="1" maxlength="2000" placeholder="Responder…"></textarea>
+    {{ media_inputs('r' ~ t.id) }}
+    <button class="btn primary">Responder</button>
+  </form>
+  {% if t.author_id == current_user.id %}
+  <form method="post" action="{{ url_for('extra.delete_message', mid=t.id) }}" onsubmit="return confirm('¿Borrar esta conversación?')">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <button class="btn ghost small-btn">Borrar conversación</button>
+  </form>
+  {% endif %}
+</section>
+{% else %}
+<div class="empty">{{ penguin("hola", 90) }}<span class="muted">Todavía no hay notas. ¡Escribe la primera! 💌</span></div>
+{% endfor %}
+
+<p class="muted small" style="margin-top:18px">🎁 ¿Buscas las notitas sorpresa? <a href="{{ url_for('main.notes') }}">Están aquí</a>.</p>
+{{ garden() }}
+{% endblock %}

@@ -27,6 +27,7 @@ class Config:
     REMEMBER_COOKIE_SECURE = SESSION_COOKIE_SECURE
 
     TIMEZONE = os.environ.get("TIMEZONE", "America/El_Salvador")
+    MAX_CONTENT_LENGTH = 15 * 1024 * 1024  # fotos, audios y guías
 
     # Web Push (genera las llaves con: python generar_vapid.py)
     VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "")

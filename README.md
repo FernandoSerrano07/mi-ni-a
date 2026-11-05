@@ -19,6 +19,8 @@ App web (Python + Flask) que se instala en el teléfono como una app y envía **
 - **Modo examen 📚**: pon el día del parcial y cada día pregunta «¿estudiaste hoy?» con cuenta regresiva.
 - **Resumen de la mañana ☀️** (7:00 por defecto) con lo del día, y **resumen del domingo 🏆** con lo cumplido.
 - **Notitas 💌**: escribe notitas sorpresa; le llega una a la otra persona cuando cumple algo (máx. 1 por día).
+- **Buzón 💌**: notas entre ustedes con foto o audio; aparecen en una ventanita al entrar y se pueden responder.
+- **Estudio 📚**: sube la guía (PDF, Word, foto o texto) y Gemini arma cuestionarios con preguntas distintas cada vez. Requiere `GEMINI_API_KEY` (gratis en aistudio.google.com/apikey).
 - **Limpieza automática**: los terminados se borran solos al cuarto día.
 - Diseño morado con tulipanes, gerberas y pingüinos (ilustraciones propias en SVG, sin imágenes externas).
 - Modo oscuro automático.
@@ -56,6 +58,7 @@ Las notificaciones push necesitan HTTPS (en `localhost` funcionan en Chrome de l
    - `DATABASE_URL`: la URL de Neon
    - `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (`mailto:tu-correo`)
    - `CRON_SECRET`: una clave cualquiera larga
+   - `GEMINI_API_KEY`: llave gratis de https://aistudio.google.com/apikey (para los cuestionarios)
    - `USUARIOS`: las cuentas, así → `yareni:Yareni:SuContraseña;fernando:Fernando:TuContraseña`
      (se crean solas al arrancar; después puedes borrar esta variable)
 4. (Plan gratis) en **[cron-job.org](https://cron-job.org)** crea una tarea **cada minuto** a

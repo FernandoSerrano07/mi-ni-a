@@ -20,8 +20,9 @@
     {% if current_user.is_authenticated %}
     <header class="top">
       <a href="{{ url_for('main.index') }}" class="brand">{{ penguin("feliz", 38, "brand-peng") }}<span>Sr. Patroclo 💜</span></a>
-      <span class="hello">Hola, {{ current_user.display_name }}
-        <a href="{{ url_for('main.notes') }}" class="hdr-note" aria-label="Notitas">💌</a></span>
+      <span class="hello"><span class="hello-name">Hola, {{ current_user.display_name }}</span>
+        <a href="{{ url_for('extra.study') }}" class="hdr-icon" aria-label="Estudio">📚</a>
+        <a href="{{ url_for('extra.mailbox') }}" class="hdr-icon" aria-label="Buzón">💌{% if unread_messages %}<span class="badge">{{ unread_messages|length }}</span>{% endif %}</a></span>
     </header>
     {% endif %}
 
@@ -30,6 +31,30 @@
     {% endwith %}
 
     <main>{% block content %}{% endblock %}</main>
+
+    {% if current_user.is_authenticated and unread_messages and request.endpoint != 'extra.mailbox' %}
+    {% set m = unread_messages[0] %}
+    <div class="note-pop" id="note-pop" data-id="{{ m.id }}" role="dialog" aria-label="Nota nueva">
+      <div class="note-card">
+        <div class="note-deco">{{ gerbera("#f472b6", size=40, stem=False) }}{{ penguin("feliz", 64) }}{{ tulip("#c084fc", "#9333ea", 26, 8) }}</div>
+        <div class="note-from">{{ '💬 ' ~ m.author.display_name ~ ' te respondió' if m.parent_id else '💌 ' ~ m.author.display_name ~ ' te dejó una nota' }}</div>
+        {% if m.text %}<p class="note-text">“{{ m.text }}”</p>{% endif %}
+        {% if m.photo %}<img class="note-photo" src="{{ url_for('extra.message_media', mid=m.id, kind='foto') }}" alt="Foto">{% endif %}
+        {% if m.audio %}<audio controls src="{{ url_for('extra.message_media', mid=m.id, kind='audio') }}"></audio>{% endif %}
+        <div class="note-when muted small">{{ m.created_at|dia }} · {{ m.created_at|hora }}{% if unread_messages|length > 1 %} · y {{ unread_messages|length - 1 }} más en el buzón{% endif %}</div>
+        <form method="post" action="{{ url_for('extra.reply', mid=m.id) }}" class="note-reply" enctype="multipart/form-data">
+          <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+          <input type="hidden" name="next" value="{{ request.path }}">
+          <textarea name="texto" rows="2" placeholder="Escribe tu respuesta… 💜"></textarea>
+          <div class="note-btns">
+            <button type="button" class="btn ghost" id="note-close">Cerrar</button>
+            <a class="btn" href="{{ url_for('extra.mailbox') }}">Ver buzón</a>
+            <button class="btn primary">Responder 💌</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endif %}
   </div>
   {% if current_user.is_authenticated %}
   <script src="{{ url_for('static', filename='app.js') }}" defer></script>

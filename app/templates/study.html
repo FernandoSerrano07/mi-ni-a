@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% from "_deco.html" import penguin, gerbera, tulip, garden, kitten, book_stack %}
+{% block title %}Estudio 📚{% endblock %}
+{% block content %}
+<a href="{{ url_for('main.index') }}" class="back">← Volver</a>
+<div class="form-head">
+  <h1>📚 Estudio</h1>
+  <div class="form-friends">{{ book_stack(50) }}{{ penguin("libro", 66) }}</div>
+</div>
+<p class="muted">Sube tu guía y Sr. Patroclo te arma preguntas para repasar. Cada vez que practiques salen preguntas diferentes 🧠</p>
+
+<form method="post" class="card form" enctype="multipart/form-data">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <label>Nombre de la guía
+    <input name="titulo" maxlength="200" placeholder="Guía parcial 2 — Matemática">
+  </label>
+  <label class="file-drop">
+    <span>📄 Elegir archivo <span class="muted small">(PDF, Word, foto o .txt · máx. 10 MB)</span></span>
+    <input type="file" name="archivo" accept=".pdf,.docx,.txt,.md,image/*" id="guide-file">
+    <span class="file-name muted small" id="guide-file-name"></span>
+  </label>
+  <details>
+    <summary>…o pegar el texto de la guía</summary>
+    <textarea name="texto" rows="5" placeholder="Pega aquí el contenido"></textarea>
+  </details>
+  <div class="row">
+    <label>Para
+      <select name="para">{% for u in users %}<option value="{{ u.id }}" {{ 'selected' if u.id == current_user.id }}>{{ u.display_name }}{{ ' (yo)' if u.id == current_user.id }}</option>{% endfor %}</select>
+    </label>
+    <label>Examen
+      <select name="examen">
+        <option value="">— Ninguno —</option>
+        {% for e in exams %}<option value="{{ e.id }}" {{ 'selected' if pre_exam == e.id }}>{{ e.title }} ({{ e.event_at|dia }})</option>{% endfor %}
+      </select>
+    </label>
+  </div>
+  {% if not exams %}<p class="muted small">Tip: crea un recordatorio tipo <b>🎓 Examen</b> y enlázalo aquí. Así, cuando te recuerde estudiar, la notificación te abre el cuestionario directo.</p>{% endif %}
+  <button class="btn primary big" id="guide-submit">Subir guía 📚</button>
+</form>
+
+<h2 class="sec">Tus guías</h2>
+{% for g in guides %}
+<article class="rem guide-card">
+  <div class="rem-title">📄 {{ g.title }}</div>
+  <div class="rem-meta">
+    {% if g.owner_id != current_user.id %}De {{ g.owner.display_name }} · {% endif %}
+    {% if g.exam %}🎓 {{ g.exam.title }} · {{ g.exam.event_at|dia }} · {% endif %}
+    {% set done = g.attempts|selectattr('score', 'ne', none)|list %}
+    {% if done %}{{ done|length }} {{ 'repaso' if done|length == 1 else 'repasos' }} · último {{ done[0].score }}/{{ done[0].total }}{% else %}Sin practicar todavía{% endif %}
+  </div>
+  <div class="rem-actions">
+    <a class="btn ok" href="{{ url_for('extra.practice', gid=g.id) }}">🧠 Practicar</a>
+    <a class="btn ghost" href="{{ url_for('extra.guide', gid=g.id) }}">Ver guía</a>
+  </div>
+</article>
+{% else %}
+<div class="empty">{{ kitten("durmiendo", "gris", 100) }}<span class="muted">Todavía no hay guías. ¡Sube la primera!</span></div>
+{% endfor %}
+{{ garden() }}
+{% endblock %}

@@ -96,6 +96,7 @@ class Reminder(db.Model):
     last_sent_at = db.Column(db.DateTime, nullable=True)
     done_at = db.Column(db.DateTime, nullable=True)
     done_count = db.Column(db.Integer, default=0)  # veces cumplido (útil en recordatorios que se repiten)
+    interval_days = db.Column(db.Integer, default=1)  # "todos los días" = 1, "cada 2 días" = 2…
 
     created_at = db.Column(db.DateTime, default=utcnow)
 
@@ -107,7 +108,7 @@ class Reminder(db.Model):
         """Avanza una fecha UTC al siguiente periodo según `repeat`, respetando la hora local."""
         local = dt.replace(tzinfo=timezone.utc).astimezone(local_tz)
         if self.repeat == "daily":
-            local = local + timedelta(days=1)
+            local = local + timedelta(days=max(1, self.interval_days or 1))
         elif self.repeat == "weekly":
             local = local + timedelta(weeks=1)
         elif self.repeat == "weekdays":
@@ -187,3 +188,55 @@ class Note(db.Model):
 
     author = db.relationship("User", foreign_keys=[author_id])
     recipient = db.relationship("User", foreign_keys=[recipient_id])
+
+
+class Message(db.Model):
+    """Buzón: notas entre ellos, con foto o audio opcional, y respuestas (hilo)."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    author_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    recipient_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    parent_id = db.Column(db.Integer, db.ForeignKey("message.id"), nullable=True, index=True)  # raíz del hilo
+    text = db.Column(db.Text, default="")
+    photo = db.Column(db.LargeBinary, nullable=True)
+    photo_mime = db.Column(db.String(40), nullable=True)
+    audio = db.Column(db.LargeBinary, nullable=True)
+    audio_mime = db.Column(db.String(60), nullable=True)
+    created_at = db.Column(db.DateTime, default=utcnow, index=True)
+    read_at = db.Column(db.DateTime, nullable=True)
+    last_activity = db.Column(db.DateTime, default=utcnow, index=True)  # para ordenar hilos
+
+    author = db.relationship("User", foreign_keys=[author_id])
+    recipient = db.relationship("User", foreign_keys=[recipient_id])
+    replies = db.relationship("Message", backref=db.backref("parent", remote_side=[id]),
+                              order_by="Message.created_at", cascade="all, delete-orphan")
+
+
+class Guide(db.Model):
+    """Guía de estudio subida (PDF, Word, foto o texto). Se guarda el texto para hacer cuestionarios."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    owner_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    exam_id = db.Column(db.Integer, db.ForeignKey("reminder.id", ondelete="SET NULL"), nullable=True)
+    title = db.Column(db.String(200), nullable=False)
+    filename = db.Column(db.String(200), nullable=True)
+    mime = db.Column(db.String(100), nullable=True)
+    data = db.Column(db.LargeBinary, nullable=True)
+    text = db.Column(db.Text, default="")
+    created_at = db.Column(db.DateTime, default=utcnow)
+
+    owner = db.relationship("User")
+    exam = db.relationship("Reminder")
+    attempts = db.relationship("QuizAttempt", backref="guide", cascade="all, delete-orphan",
+                               order_by="QuizAttempt.created_at.desc()")
+
+
+class QuizAttempt(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    guide_id = db.Column(db.Integer, db.ForeignKey("guide.id"), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    questions = db.Column(db.Text, nullable=False)  # JSON
+    score = db.Column(db.Integer, nullable=True)
+    total = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=utcnow)
+    finished_at = db.Column(db.DateTime, nullable=True)

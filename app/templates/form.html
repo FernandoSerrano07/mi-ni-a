@@ -62,6 +62,12 @@
         <input type="time" name="hora_pregunta" value="{{ v.hora_pregunta }}">
       </label>
     </div>
+    <label>Recordarme estudiar
+      <select name="cada_dias">
+        {% for n, t in [(1, 'Todos los días'), (2, 'Cada 2 días'), (3, 'Cada 3 días')] %}<option value="{{ n }}" {{ 'selected' if v.cada_dias == n|string }}>{{ t }}</option>{% endfor %}
+      </select>
+    </label>
+    <p class="muted small">Después de guardarlo, sube tu guía en <b>📚 Estudio</b> y te armo cuestionarios para repasar.</p>
   </fieldset>
 
   <fieldset class="aviso">

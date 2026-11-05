@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_deco.html" import penguin, gerbera, tulip, garden, kitten, book_stack %}
+{% block title %}Practicar · {{ g.title }}{% endblock %}
+{% block content %}
+<a href="{{ url_for('extra.guide', gid=g.id) }}" class="back">← {{ g.title }}</a>
+
+<div id="quiz" data-gid="{{ g.id }}">
+  <div id="quiz-loading" class="empty">
+    {{ penguin("libro", 120) }}
+    <div>Sr. Patroclo está leyendo tu guía y preparando preguntas nuevas…</div>
+    <div class="dots"><span></span><span></span><span></span></div>
+  </div>
+
+  <div id="quiz-error" class="card" hidden>
+    <p id="quiz-error-text"></p>
+    <button class="btn primary" onclick="location.reload()">Intentar otra vez</button>
+  </div>
+
+  <div id="quiz-box" hidden>
+    <div class="quiz-progress"><span id="quiz-bar"></span></div>
+    <div class="muted small" id="quiz-count"></div>
+    <h2 class="quiz-q" id="quiz-q"></h2>
+    <div class="quiz-options" id="quiz-options"></div>
+    <div class="quiz-why card" id="quiz-why" hidden></div>
+    <button class="btn primary big" id="quiz-next" hidden>Siguiente →</button>
+  </div>
+
+  <div id="quiz-end" class="empty" hidden>
+    <div id="quiz-end-art"></div>
+    <h2 id="quiz-score"></h2>
+    <p id="quiz-msg"></p>
+    <div class="card form" style="width:100%">
+      <button class="btn primary big" onclick="location.reload()">🔁 Otra ronda con preguntas nuevas</button>
+      <a class="btn" href="{{ url_for('extra.guide', gid=g.id) }}">📖 Volver a la guía</a>
+    </div>
+  </div>
+</div>
+<template id="art-feliz">{{ penguin("feliz", 120) }}</template>
+<template id="art-libro">{{ penguin("libro", 120) }}</template>
+{% endblock %}

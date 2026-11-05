@@ -43,8 +43,13 @@ def build_payload(r: Reminder, is_followup: bool) -> dict:
             title, body = f"📚 Faltan {d} días: {r.title}", "¿Estudiaste hoy? Aunque sea un ratito 💪"
         if is_followup:
             title = f"{random.choice(FOLLOWUP_PREFIXES)} {title}"
+        from .models import Guide
+        g = Guide.query.filter_by(exam_id=r.id).order_by(Guide.created_at.desc()).first()
+        url = f"/estudio/{g.id}/practicar" if g else f"/?r={r.id}"
+        if g:
+            body += " Toca para practicar con preguntas nuevas 🧠"
         return {"title": title, "body": body, "tag": f"reminder-{r.id}", "reminder_id": r.id, "kind": "exam",
-                "token": make_action_token(r.id, r.owner_id), "url": f"/?r={r.id}", "speak": title}
+                "token": make_action_token(r.id, r.owner_id), "url": url, "speak": title}
 
     body_parts = []
     if r.event_at:

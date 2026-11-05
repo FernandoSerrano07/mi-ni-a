@@ -137,6 +137,141 @@
   // ---------------- Notitas ----------------
   $$(".note-idea").forEach((b) => b.onclick = () => { const t = $('textarea[name="texto"]'); if (t) t.value = b.textContent.trim(); });
 
+  // ---------------- Ventana flotante de nota nueva ----------------
+  const pop = $("#note-pop");
+  if (pop) {
+    const close = () => { pop.classList.add("bye"); setTimeout(() => pop.remove(), 250); post(`/buzon/${pop.dataset.id}/leido`); };
+    $("#note-close").onclick = close;
+    pop.addEventListener("click", (e) => { if (e.target === pop) close(); });
+    const txt = pop.querySelector(".note-text");
+    if (txt) setTimeout(() => speak(txt.textContent), 600);
+  }
+
+  // ---------------- Buzón: foto (comprimida) y audio ----------------
+  function compressImage(file, maxSide = 1400, quality = 0.82) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const s = Math.min(1, maxSide / Math.max(img.width, img.height));
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        c.toBlob((b) => resolve(b || file), "image/jpeg", quality);
+        URL.revokeObjectURL(img.src);
+      };
+      img.onerror = () => resolve(file);
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
+  $$(".msg-form, .note-reply").forEach((f) => {
+    const state = { photo: null, audio: null };
+    const photoIn = f.querySelector(".photo-input");
+    const photoPrev = f.querySelector(".photo-preview");
+    const recBtn = f.querySelector(".rec-btn");
+    const recStatus = f.querySelector(".rec-status");
+    const audioPrev = f.querySelector(".audio-preview");
+
+    if (photoIn) photoIn.onchange = async () => {
+      const file = photoIn.files[0]; if (!file) return;
+      state.photo = await compressImage(file);
+      photoPrev.src = URL.createObjectURL(state.photo); photoPrev.hidden = false;
+    };
+
+    if (recBtn) {
+      if (!navigator.mediaDevices || !window.MediaRecorder) { recBtn.hidden = true; }
+      let rec = null, chunks = [], timer = null, secs = 0;
+      recBtn.onclick = async () => {
+        if (rec && rec.state === "recording") { rec.stop(); return; }
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const type = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm", "audio/ogg"].find((t) => MediaRecorder.isTypeSupported(t)) || "";
+          rec = new MediaRecorder(stream, type ? { mimeType: type } : undefined);
+          chunks = []; secs = 0;
+          rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+          rec.onstop = () => {
+            clearInterval(timer); stream.getTracks().forEach((t) => t.stop());
+            state.audio = new Blob(chunks, { type: (rec.mimeType || "audio/webm").split(";")[0] });
+            audioPrev.src = URL.createObjectURL(state.audio); audioPrev.hidden = false;
+            recBtn.textContent = "🎤 Grabar otro"; recBtn.classList.remove("on"); recStatus.textContent = `Audio de ${secs} s listo`;
+          };
+          rec.start(); recBtn.textContent = "⏹ Detener"; recBtn.classList.add("on");
+          timer = setInterval(() => { secs++; recStatus.textContent = `🔴 Grabando… ${secs} s`; if (secs >= 90) rec.stop(); }, 1000);
+        } catch (_) { recStatus.textContent = "No tengo permiso para el micrófono"; }
+      };
+    }
+
+    f.addEventListener("submit", async (e) => {
+      if (!state.photo && !state.audio) return; // sin archivos: envío normal
+      e.preventDefault();
+      const fd = new FormData(f);
+      fd.delete("foto");
+      if (state.photo) fd.append("foto", state.photo, "foto.jpg");
+      if (state.audio) fd.append("audio", state.audio, "audio." + (state.audio.type.includes("mp4") ? "m4a" : "webm"));
+      const btn = f.querySelector("button.primary, button.btn.primary"); if (btn) { btn.disabled = true; btn.textContent = "Enviando…"; }
+      const r = await fetch(f.action || location.href, { method: "POST", body: fd, headers: { "X-Requested-With": "fetch" }, credentials: "same-origin" });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) { alertBox(j.error || "No se pudo enviar"); if (btn) { btn.disabled = false; btn.textContent = "Enviar"; } return; }
+      location.href = j.redirect || location.pathname;
+    });
+  });
+  function alertBox(t) { const d = document.createElement("div"); d.className = "flash error"; d.textContent = t; ($("main") || document.body).prepend(d); window.scrollTo(0, 0); }
+
+  // ---------------- Estudio ----------------
+  const gf = $("#guide-file");
+  if (gf) {
+    gf.onchange = () => { $("#guide-file-name").textContent = gf.files[0] ? "✓ " + gf.files[0].name : ""; };
+    gf.form.addEventListener("submit", () => { const b = $("#guide-submit"); b.textContent = "Leyendo tu guía… 📖"; b.disabled = true; });
+  }
+
+  const quiz = $("#quiz");
+  if (quiz) {
+    const cheers = ["¡Eso! 🎉", "¡Muy bien! 💜", "¡Correcto! 🐧", "¡Excelente! 🌷", "¡Así se hace! ✨"];
+    const oops = ["Casi 💪", "No pasa nada, así se aprende 🌱", "Ups, esta era otra 🙈"];
+    const pick = (a) => a[Math.floor(Math.random() * a.length)];
+    (async () => {
+      const r = await post(`/api/estudio/${quiz.dataset.gid}/cuestionario`);
+      const j = await r.json().catch(() => ({ error: "Error de conexión" }));
+      $("#quiz-loading").hidden = true;
+      if (!r.ok) { $("#quiz-error").hidden = false; $("#quiz-error-text").textContent = j.error; return; }
+      const qs = j.questions; let i = 0, score = 0;
+      const box = $("#quiz-box"); box.hidden = false;
+      const show = () => {
+        const q = qs[i];
+        $("#quiz-bar").style.width = `${(i / qs.length) * 100}%`;
+        $("#quiz-count").textContent = `Pregunta ${i + 1} de ${qs.length} · ${score} correctas`;
+        $("#quiz-q").textContent = q.q;
+        const opts = $("#quiz-options"); opts.innerHTML = "";
+        $("#quiz-why").hidden = true; $("#quiz-next").hidden = true;
+        q.options.forEach((o, k) => {
+          const b = document.createElement("button"); b.className = "quiz-opt"; b.textContent = o;
+          b.onclick = () => {
+            $$(".quiz-opt").forEach((x) => x.disabled = true);
+            const ok = k === q.answer; if (ok) score++;
+            b.classList.add(ok ? "right" : "wrong");
+            opts.children[q.answer].classList.add("right");
+            const w = $("#quiz-why"); w.hidden = false;
+            w.innerHTML = `<b>${ok ? pick(cheers) : pick(oops)}</b><br>`; w.append(document.createTextNode(q.why || ""));
+            const n = $("#quiz-next"); n.hidden = false; n.textContent = i + 1 < qs.length ? "Siguiente →" : "Ver resultado 🏁";
+          };
+          opts.append(b);
+        });
+      };
+      $("#quiz-next").onclick = () => { i++; if (i < qs.length) { show(); window.scrollTo(0, 0); } else finish(); };
+      const finish = () => {
+        box.hidden = true; $("#quiz-end").hidden = false;
+        const pct = score / qs.length;
+        $("#quiz-end-art").innerHTML = $(pct >= 0.6 ? "#art-feliz" : "#art-libro").innerHTML;
+        $("#quiz-score").textContent = `${score} de ${qs.length} correctas`;
+        $("#quiz-msg").textContent = pct === 1 ? "¡Perfecto! Vas a sacar 10 💜🎉" : pct >= 0.75 ? "¡Muy bien! Ya casi lo dominas 🌷" :
+          pct >= 0.5 ? "¡Bien! Repasa las que fallaste y vuelve a intentar 💪" : "Tranquila, cada repaso cuenta. Lee la guía otra vez y probamos de nuevo 🐧";
+        post(`/api/estudio/intento/${j.attempt}/resultado`, { score });
+        speak($("#quiz-score").textContent);
+      };
+      show();
+    })();
+  }
+
   // ---------------- Formulario ----------------
   const form = $("#rem-form");
   if (!form) return;

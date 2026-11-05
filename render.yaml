@@ -6,7 +6,7 @@ services:
     region: ohio  # misma zona que la base de datos de Neon (AWS US East 2)
     buildCommand: pip install -r requirements.txt
     # 1 solo proceso para que el programador no envíe avisos duplicados
-    startCommand: gunicorn wsgi:app --workers 1 --threads 4 --bind 0.0.0.0:$PORT
+    startCommand: gunicorn wsgi:app --workers 1 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT
     healthCheckPath: /salud
     envVars:
       - key: SECRET_KEY

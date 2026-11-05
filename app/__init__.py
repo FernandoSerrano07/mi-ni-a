@@ -32,7 +32,9 @@ def create_app(config_overrides: dict | None = None, start_scheduler: bool = Fal
     login_manager.init_app(app)
 
     from .routes import bp
+    from .routes_extra import bp as bp_extra
     app.register_blueprint(bp)
+    app.register_blueprint(bp_extra)
 
     with app.app_context():
         db.create_all()

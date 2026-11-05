@@ -60,6 +60,7 @@ def csrf(client):
 class FakeResp:
     status_code = 201
     text = ""
+    headers = {}
 
 
 def test_login_y_recordar(client):
@@ -309,3 +310,141 @@ def test_ajustes_y_contrasena(client, app):
         assert u.summary_time == "06:30" and u.summary_enabled is False and u.check_password("nueva1")
     for page in ["/ajustes", "/notitas"]:
         assert client.get(page).status_code == 200
+
+
+# ---------------- Buzón y estudio ----------------
+def test_buzon_nota_respuesta_y_ventana(client, app):
+    import io
+    from app.models import Message
+    login(client, "carlos", "abcd")
+    tok = csrf(client)
+    with app.app_context():
+        ana_id = User.query.filter_by(username="ana").first().id
+    png = b"\x89PNG\r\n\x1a\n" + b"0" * 100
+    sent = []
+    with _push_patch(sent):
+        r = client.post("/buzon", data={"_csrf": tok, "para": ana_id, "texto": "Te quiero mucho 💜",
+                                        "foto": (io.BytesIO(png), "f.png", "image/png")},
+                        content_type="multipart/form-data")
+    assert r.status_code == 302 and any(u.endswith("/ana") for u, _ in sent)
+    # Ana ve la ventana flotante (otro "teléfono")
+    from flask import g
+    g.pop("_login_user", None)
+    c2 = app.test_client()
+    login(c2, "ana", "1234")
+    html = c2.get("/").get_data(as_text=True)
+    assert 'id="note-pop"' in html and "Te quiero mucho" in html
+    with app.app_context():
+        mid = Message.query.one().id
+    assert c2.get(f"/buzon/media/{mid}/foto").data == png
+    # Responde desde la ventana
+    tok2 = csrf(c2)
+    with _push_patch(sent):
+        c2.post(f"/buzon/{mid}/responder", data={"_csrf": tok2, "texto": "Yo más 🐧"})
+    with app.app_context():
+        root = db.session.get(Message, mid)
+        assert root.read_at is not None and root.replies[0].text == "Yo más 🐧"
+        assert root.replies[0].recipient.username == "carlos"
+    # A Carlos le aparece la respuesta
+    g.pop("_login_user", None)
+    assert "te respondió" in client.get("/").get_data(as_text=True)
+    # Nadie más puede ver la foto
+    g.pop("_login_user", None)
+    c3 = app.test_client()
+    assert c3.get(f"/buzon/media/{mid}/foto").status_code in (302, 401)
+
+
+def test_buzon_rechaza_vacio_y_no_foto(client, app):
+    import io
+    login(client, "carlos", "abcd")
+    tok = csrf(client)
+    with app.app_context():
+        ana_id = User.query.filter_by(username="ana").first().id
+    r = client.post("/buzon", data={"_csrf": tok, "para": ana_id, "texto": ""}, follow_redirects=True)
+    assert "Escribe algo" in r.get_data(as_text=True)
+    r = client.post("/buzon", data={"_csrf": tok, "para": ana_id, "foto": (io.BytesIO(b"x"), "a.exe", "application/x-msdownload")},
+                    content_type="multipart/form-data", follow_redirects=True)
+    assert "no es una foto" in r.get_data(as_text=True)
+
+
+GUIA = ("La fotosíntesis es el proceso por el cual las plantas convierten la luz solar en energía química. "
+        "Ocurre en los cloroplastos, que contienen clorofila. Produce glucosa y libera oxígeno. ") * 5
+
+
+def _fake_gemini(n=8):
+    import json as _j
+    qs = [{"pregunta": f"Pregunta {i}?", "opciones": ["A", "B", "C", "D"], "correcta": i % 4, "explicacion": "Porque sí"}
+          for i in range(n)]
+    class R:
+        ok = True; status_code = 200; headers = {"content-type": "application/json"}
+        def json(self):
+            return {"candidates": [{"content": {"parts": [{"text": _j.dumps({"preguntas": qs})}]}}]}
+    return R()
+
+
+def test_guia_y_cuestionario(client, app, monkeypatch):
+    import io
+    from app.models import Guide, QuizAttempt
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    login(client)
+    tok = csrf(client)
+    r = client.post("/estudio", data={"_csrf": tok, "titulo": "Biología", "archivo": (io.BytesIO(GUIA.encode()), "guia.txt", "text/plain")},
+                    content_type="multipart/form-data")
+    assert r.status_code == 302
+    with app.app_context():
+        g = Guide.query.one()
+        assert "fotosíntesis" in g.text
+        gid = g.id
+    calls = []
+    def fake_post(url, **kw):
+        calls.append(kw["json"]["contents"][0]["parts"][0]["text"])
+        assert kw["headers"]["x-goog-api-key"] == "test-key"
+        return _fake_gemini()
+    with patch("app.study.requests.post", side_effect=fake_post):
+        j = client.post(f"/api/estudio/{gid}/cuestionario", headers={"X-CSRF-Token": tok}).get_json()
+        assert len(j["questions"]) == 8
+        client.post(f"/api/estudio/intento/{j['attempt']}/resultado", headers={"X-CSRF-Token": tok}, json={"score": 6})
+        # Segunda ronda: le pide a la IA no repetir las anteriores
+        client.post(f"/api/estudio/{gid}/cuestionario", headers={"X-CSRF-Token": tok})
+    assert "Pregunta 3?" in calls[1]
+    with app.app_context():
+        assert QuizAttempt.query.filter_by(score=6).count() == 1
+    assert "6/8" in client.get(f"/estudio/{gid}").get_data(as_text=True)
+    assert client.get(f"/estudio/{gid}/practicar").status_code == 200
+
+
+def test_cuestionario_sin_llave(client, app, monkeypatch):
+    import io
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    login(client)
+    tok = csrf(client)
+    client.post("/estudio", data={"_csrf": tok, "titulo": "X", "texto": GUIA})
+    from app.models import Guide
+    with app.app_context():
+        gid = Guide.query.one().id
+    r = client.post(f"/api/estudio/{gid}/cuestionario", headers={"X-CSRF-Token": tok})
+    assert r.status_code == 400 and "GEMINI_API_KEY" in r.get_json()["error"]
+
+
+def test_extraer_pdf_y_word():
+    import io
+    import docx
+    from app.study import extract_text
+    d = docx.Document(); d.add_paragraph("Hola guía de Word"); b = io.BytesIO(); d.save(b)
+    assert "Hola guía" in extract_text(b.getvalue(), "", "g.docx")
+
+
+def test_examen_abre_cuestionario_y_cada_2_dias(app):
+    from app.models import Guide
+    from app.scheduler import build_payload, local_tz
+    with app.app_context():
+        ana = User.query.filter_by(username="ana").first()
+        now = utcnow()
+        r = Reminder(title="Parcial", kind="exam", owner_id=ana.id, created_by_id=ana.id, notify_at=now,
+                     next_fire_at=now, event_at=now + timedelta(days=6), repeat="daily", interval_days=2)
+        db.session.add(r); db.session.commit()
+        db.session.add(Guide(owner_id=ana.id, title="G", text=GUIA, exam_id=r.id)); db.session.commit()
+        assert "/practicar" in build_payload(r, False)["url"]
+        before = r.notify_at
+        r.mark_done(local_tz())
+        assert (r.notify_at - before).days == 2

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_deco.html" import penguin, gerbera, tulip, garden, kitten, book_stack %}
+{% block title %}{{ g.title }}{% endblock %}
+{% block content %}
+<a href="{{ url_for('extra.study') }}" class="back">← Estudio</a>
+<h1>📄 {{ g.title }}</h1>
+{% if g.exam %}<p class="muted">🎓 Para: <b>{{ g.exam.title }}</b> · {{ g.exam.event_at|dia }}
+  {% set d = dias_para(g.exam.event_at) %}{% if d > 0 %} · faltan {{ d }} días{% elif d == 0 %} · ¡es hoy! 💜{% endif %}</p>{% endif %}
+
+<div class="card form">
+  <a class="btn primary big" href="{{ url_for('extra.practice', gid=g.id) }}">🧠 Practicar con preguntas nuevas</a>
+  {% if g.data %}<a class="btn" href="{{ url_for('extra.guide_file', gid=g.id) }}" target="_blank">📎 Abrir archivo original{% if g.filename %} ({{ g.filename }}){% endif %}</a>{% endif %}
+</div>
+
+{% set done = g.attempts|selectattr('score', 'ne', none)|list %}
+{% if done %}
+<h2 class="sec">📈 Tus repasos</h2>
+<div class="card scores">
+  {% for a in done[:12] %}
+  {% set pct = (100 * a.score / a.total)|round|int %}
+  <div class="score-row">
+    <span class="muted small">{{ a.created_at|dia }} {{ a.created_at|hora }}</span>
+    <div class="score-bar"><span style="width: {{ pct }}%"></span></div>
+    <b>{{ a.score }}/{{ a.total }}</b>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<details class="guide-text">
+  <summary>📖 Leer el texto de la guía</summary>
+  <div class="card"><pre>{{ g.text or 'No se pudo leer texto de este archivo.' }}</pre></div>
+</details>
+
+<form method="post" action="{{ url_for('extra.delete_guide', gid=g.id) }}" onsubmit="return confirm('¿Borrar esta guía y sus repasos?')">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <button class="btn danger ghost">Borrar guía</button>
+</form>
+{{ garden() }}
+{% endblock %}
