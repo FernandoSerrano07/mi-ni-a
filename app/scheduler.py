@@ -55,6 +55,28 @@ def build_payload(r: Reminder, is_followup: bool) -> dict:
     }
 
 
+# Días que se guardan los recordatorios terminados antes de borrarse solos
+KEEP_DAYS = 3
+
+
+def cleanup_old_reminders(now=None) -> int:
+    """Borra recordatorios ya hechos (o que nunca se confirmaron) con más de KEEP_DAYS días.
+    Los que se repiten nunca se borran: siguen programándose para la próxima vez."""
+    now = now or utcnow()
+    limit = now - timedelta(days=KEEP_DAYS)
+    done = Reminder.query.filter(Reminder.status == "done", Reminder.done_at < limit)
+    missed = Reminder.query.filter(Reminder.status == "missed",
+                                   db.func.coalesce(Reminder.last_sent_at, Reminder.notify_at) < limit)
+    n = done.delete(synchronize_session=False) + missed.delete(synchronize_session=False)
+    if n:
+        db.session.commit()
+        log.info("Limpieza: %d recordatorios viejos borrados", n)
+    return n
+
+
+_last_cleanup = None
+
+
 def process_due_reminders(now=None) -> int:
     """Procesa los recordatorios vencidos. Devuelve cuántos se procesaron."""
     now = now or utcnow()
@@ -97,6 +119,12 @@ def process_due_reminders(now=None) -> int:
     db.session.commit()
     if due:
         log.info("Procesados %d recordatorios", len(due))
+
+    # Limpieza automática, una vez por hora
+    global _last_cleanup
+    if _last_cleanup is None or now - _last_cleanup >= timedelta(hours=1):
+        _last_cleanup = now
+        cleanup_old_reminders(now)
     return len(due)
 
 

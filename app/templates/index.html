@@ -42,6 +42,7 @@
 {% if hechos %}
 <details class="done-list">
   <summary>✅ Hechos (últimos 3 días) · {{ hechos|length }}</summary>
+  <p class="muted small">Al cuarto día se borran solos para no acumular.</p>
   {% for r in hechos %}{{ card(r, 'done') }}{% endfor %}
 </details>
 {% endif %}

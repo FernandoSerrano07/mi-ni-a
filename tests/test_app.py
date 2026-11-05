@@ -174,3 +174,21 @@ def test_usuarios_desde_variable(monkeypatch):
     with app.app_context():
         assert User.query.filter_by(username="yareni").first().check_password("clave1")
         assert User.query.filter_by(username="fernando").first().display_name == "Fernando"
+
+
+def test_limpieza_borra_hechos_de_mas_de_3_dias(app):
+    from app.scheduler import cleanup_old_reminders
+    with app.app_context():
+        ana = User.query.filter_by(username="ana").first()
+        now = utcnow()
+        def mk(title, **kw):
+            r = Reminder(title=title, owner_id=ana.id, created_by_id=ana.id, notify_at=now - timedelta(days=5), **kw)
+            db.session.add(r)
+        mk("viejo hecho", status="done", done_at=now - timedelta(days=4))
+        mk("reciente hecho", status="done", done_at=now - timedelta(days=2))
+        mk("viejo sin confirmar", status="missed", last_sent_at=now - timedelta(days=4))
+        mk("se repite", status="pending", repeat="daily", next_fire_at=now + timedelta(hours=1))
+        mk("pendiente", status="pending", next_fire_at=now + timedelta(hours=1))
+        db.session.commit()
+        assert cleanup_old_reminders(now) == 2
+        assert sorted(r.title for r in Reminder.query.all()) == ["pendiente", "reciente hecho", "se repite"]
