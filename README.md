@@ -1,4 +1,4 @@
-# 🐧 La Pingüi 💜 — la ayuda de Yareni
+# 🐧 Sr. Patroclo 💜 — la ayuda de Yareni
 
 Recordatorios con notificaciones y seguimiento, hechos con cariño para Yareni.
 
@@ -61,7 +61,7 @@ Las notificaciones push necesitan HTTPS (en `localhost` funcionan en Chrome de l
 **Android (Chrome):** abre la página → inicia sesión → toca **Activar** notificaciones → menú ⋮ → **Instalar app**.
 
 **iPhone (iOS 16.4 o más):** abre en **Safari** → **Compartir** → **Agregar a pantalla de inicio** → abre la app *desde el ícono* → inicia sesión → **Activar**.
-En iPhone, revisa también *Ajustes → Notificaciones → La Pingüi* y ponlas como **Destacadas / Sensibles al tiempo** y fuera del modo *Concentración* para que se vean siempre.
+En iPhone, revisa también *Ajustes → Notificaciones → Sr. Patroclo* y ponlas como **Destacadas / Sensibles al tiempo** y fuera del modo *Concentración* para que se vean siempre.
 
 Después toca **Ajustes → Enviar notificación de prueba** para confirmar.
 
