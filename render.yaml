@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: la-pingui
+    name: senor-patroclo
     runtime: python
     plan: free
     region: ohio  # misma zona que la base de datos de Neon (AWS US East 2)
