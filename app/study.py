@@ -82,10 +82,13 @@ def _gemini(parts: list, schema: dict | None = None, temperature: float = 0.9) -
         if r.status_code == 429:
             raise StudyError("Se alcanzó el límite gratis de Gemini por ahora. Intenta en unos minutos 🙏")
         if r.status_code in (400, 401, 403):
+            # Las llaves nuevas (AQ.) pueden rechazarse con un modelo retirado: se prueba el siguiente
             msg = r.json().get("error", {}).get("message", "") if r.headers.get("content-type", "").startswith("application/json") else ""
-            if "API key" in msg or r.status_code in (401, 403):
-                raise StudyError("La llave de Gemini no es válida. Revisa GEMINI_API_KEY en Render.")
-            last = msg or f"Error {r.status_code}"
+            log.warning("Gemini %s con %s: %s", r.status_code, model, msg[:200])
+            if r.status_code in (401, 403) or "API key" in msg:
+                last = "La llave de Gemini no funcionó. Revisa GEMINI_API_KEY en Render (debe estar completa, sin espacios)."
+            else:
+                last = msg or f"Error {r.status_code}"
             continue
         if not r.ok:
             last = f"Gemini respondió {r.status_code}"
