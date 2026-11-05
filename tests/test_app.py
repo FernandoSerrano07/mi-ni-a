@@ -448,3 +448,13 @@ def test_examen_abre_cuestionario_y_cada_2_dias(app):
         before = r.notify_at
         r.mark_done(local_tz())
         assert (r.notify_at - before).days == 2
+
+
+def test_hecho_en_recordatorio_borrado_no_da_error(client):
+    login(client)
+    tok = csrf(client)
+    r = client.post("/recordatorio/999/hecho", data={"_csrf": tok}, follow_redirects=True)
+    assert r.status_code == 200 and "ya no existe" in r.get_data(as_text=True)
+    assert client.get("/recordatorio/999/hecho").status_code == 302
+    r = client.get("/no-existe")
+    assert r.status_code == 404 and "No encontré eso" in r.get_data(as_text=True)

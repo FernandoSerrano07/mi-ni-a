@@ -95,6 +95,37 @@ def get_reminder_or_404(rid: int) -> Reminder:
     return r
 
 
+# ---------------- Páginas de error ----------------
+@bp.app_errorhandler(404)
+def not_found(e):
+    return render_template("error.html", code=404, title="No encontré eso 🙈",
+                           msg="Puede que se haya borrado o que el enlace sea viejo."), 404
+
+
+@bp.app_errorhandler(400)
+def bad_request(e):
+    return render_template("error.html", code=400, title="La página estaba vieja 🔄",
+                           msg="Recarga la página e inténtalo otra vez."), 400
+
+
+@bp.app_errorhandler(405)
+def not_allowed(e):
+    return redirect(url_for("main.index"))
+
+
+@bp.app_errorhandler(413)
+def too_large(e):
+    return render_template("error.html", code=413, title="Archivo muy grande 📦",
+                           msg="El máximo es 10 MB por guía y 4 MB por foto o audio."), 413
+
+
+@bp.app_errorhandler(500)
+def server_error(e):
+    db.session.rollback()
+    return render_template("error.html", code=500, title="Algo salió mal 😿",
+                           msg="Ya quedó registrado. Intenta de nuevo en un momento."), 500
+
+
 # ---------------- Sesión ----------------
 @bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -255,11 +286,21 @@ def _form_values(r: Reminder | None) -> dict:
     }
 
 
+@bp.route("/recordatorio/<int:rid>/<accion>", methods=["GET"])
+@login_required
+def reminder_action_get(rid, accion):
+    # Si se recarga la página o se llega con "atrás", no mostrar error: volver a la lista
+    return redirect(url_for("main.index"))
+
+
 @bp.route("/recordatorio/<int:rid>/<accion>", methods=["POST"])
 @login_required
 @csrf_protect
 def reminder_action(rid, accion):
-    r = get_reminder_or_404(rid)
+    r = db.session.get(Reminder, rid)
+    if r is None:
+        flash("Ese recordatorio ya no existe (quizás se borró desde otro teléfono). Te muestro la lista actualizada 🐧", "warn")
+        return redirect(url_for("main.index"))
     if accion == "hecho":
         r.mark_done(local_tz())
         flash("¡Listo, bien hecho! 💜", "ok")
