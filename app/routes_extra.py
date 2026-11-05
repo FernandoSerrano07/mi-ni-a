@@ -296,8 +296,9 @@ def new_quiz(gid):
             avoid += [q["q"] for q in json.loads(a.questions)]
         except (ValueError, KeyError, TypeError):
             pass
+    nivel = (request.get_json(silent=True) or {}).get("nivel", "normal")
     try:
-        qs = generate_quiz(g.text, g.title, avoid)
+        qs = generate_quiz(g.text, g.title, avoid, nivel=nivel if nivel in ("facil", "normal", "dificil") else "normal")
     except StudyError as exc:
         return jsonify({"error": str(exc)}), 400
     a = QuizAttempt(guide_id=g.id, user_id=current_user.id, questions=json.dumps(qs, ensure_ascii=False),

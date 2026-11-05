@@ -125,7 +125,17 @@ QUIZ_SCHEMA = {
 }
 
 
-def generate_quiz(guide_text: str, title: str, avoid: list[str], n: int = QUESTIONS_PER_QUIZ) -> list[dict]:
+NIVELES = {
+    "facil": "Nivel FÁCIL: preguntas directas sobre ideas principales y definiciones, para empezar a repasar.",
+    "normal": ("Nivel UNIVERSITARIO: como en un parcial real. Mezcla preguntas de memoria con preguntas que "
+               "exijan entender y aplicar (por ejemplo un caso corto o un ejemplo)."),
+    "dificil": ("Nivel DIFÍCIL: como las preguntas más exigentes del parcial. Usa casos prácticos, comparaciones "
+                "finas entre conceptos parecidos y detalles que suelen confundirse. Que haya que pensar."),
+}
+
+
+def generate_quiz(guide_text: str, title: str, avoid: list[str], n: int = QUESTIONS_PER_QUIZ,
+                  nivel: str = "normal") -> list[dict]:
     text = guide_text[:MAX_TEXT]
     if len(text) < 80:
         raise StudyError("La guía casi no tiene texto para hacer preguntas.")
@@ -134,9 +144,16 @@ def generate_quiz(guide_text: str, title: str, avoid: list[str], n: int = QUESTI
     prompt = f"""Eres un tutor amable que ayuda a una estudiante universitaria a prepararse para su examen «{title}».
 Con base SOLO en la guía de abajo, crea {n} preguntas de opción múltiple en español.
 
-Reglas:
-- 4 opciones por pregunta, una sola correcta; las incorrectas deben ser creíbles.
-- "correcta" es el índice (0 a 3) de la opción correcta. Varía la posición de la correcta.
+{NIVELES.get(nivel, NIVELES["normal"])}
+
+Reglas para las opciones (muy importante):
+- 4 opciones por pregunta y una sola correcta.
+- Las 3 incorrectas deben ser CREÍBLES: del mismo tema de la guía, usando conceptos reales que aparecen
+  en ella pero que no responden la pregunta, o errores típicos de estudiantes. Nada absurdo ni obviamente falso.
+- Las 4 opciones deben tener un largo y un estilo parecidos. La correcta NO debe ser la más larga ni la más detallada.
+- No uses palabras que delaten la respuesta ("exclusivamente", "siempre", "nunca", "solo") únicamente en las falsas.
+- Evita "todas las anteriores" y "ninguna de las anteriores".
+- "correcta" es el índice (0 a 3) de la opción correcta. Reparte la correcta en posiciones distintas.
 - "explicacion": 1 o 2 frases que expliquen por qué es la correcta, citando la idea de la guía.
 - Esta vez enfócate sobre todo en: {enfoques}. Cubre partes distintas de la guía.
 - NO repitas ni reformules estas preguntas que ya se hicieron antes:
@@ -157,7 +174,9 @@ GUÍA:
         c = q.get("correcta")
         if len(opts) < 2 or not isinstance(c, int) or not 0 <= c < len(opts) or not q.get("pregunta"):
             continue
-        out.append({"q": str(q["pregunta"]).strip(), "options": opts, "answer": c,
+        right = opts[c]
+        random.shuffle(opts)
+        out.append({"q": str(q["pregunta"]).strip(), "options": opts, "answer": opts.index(right),
                     "why": str(q.get("explicacion", "")).strip()})
     if len(out) < 3:
         raise StudyError("No se pudieron armar suficientes preguntas. Intenta otra vez.")

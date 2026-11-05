@@ -229,8 +229,18 @@
     const cheers = ["¡Eso! 🎉", "¡Muy bien! 💜", "¡Correcto! 🐧", "¡Excelente! 🌷", "¡Así se hace! ✨"];
     const oops = ["Casi 💪", "No pasa nada, así se aprende 🌱", "Ups, esta era otra 🙈"];
     const pick = (a) => a[Math.floor(Math.random() * a.length)];
-    (async () => {
-      const r = await post(`/api/estudio/${quiz.dataset.gid}/cuestionario`);
+    let nivel = "normal";
+    try { nivel = localStorage.getItem("nivel") || "normal"; } catch (_) {}
+    $$(".level").forEach((b) => {
+      b.classList.toggle("on", b.dataset.n === nivel);
+      b.onclick = () => { nivel = b.dataset.n; $$(".level").forEach((x) => x.classList.toggle("on", x === b)); };
+    });
+    $("#quiz-start").onclick = () => {
+      try { localStorage.setItem("nivel", nivel); } catch (_) {}
+      $("#quiz-level").hidden = true; $("#quiz-loading").hidden = false; start();
+    };
+    const start = async () => {
+      const r = await post(`/api/estudio/${quiz.dataset.gid}/cuestionario`, { nivel });
       const j = await r.json().catch(() => ({ error: "Error de conexión" }));
       $("#quiz-loading").hidden = true;
       if (!r.ok) { $("#quiz-error").hidden = false; $("#quiz-error-text").textContent = j.error; return; }
@@ -239,7 +249,7 @@
       const show = () => {
         const q = qs[i];
         $("#quiz-bar").style.width = `${(i / qs.length) * 100}%`;
-        $("#quiz-count").textContent = `Pregunta ${i + 1} de ${qs.length} · ${score} correctas`;
+        $("#quiz-count").textContent = `Pregunta ${i + 1} de ${qs.length} · ${score} ${score === 1 ? "correcta" : "correctas"}`;
         $("#quiz-q").textContent = q.q;
         const opts = $("#quiz-options"); opts.innerHTML = "";
         $("#quiz-why").hidden = true; $("#quiz-next").hidden = true;
@@ -248,6 +258,7 @@
           b.onclick = () => {
             $$(".quiz-opt").forEach((x) => x.disabled = true);
             const ok = k === q.answer; if (ok) score++;
+            $("#quiz-count").textContent = `Pregunta ${i + 1} de ${qs.length} · ${score} ${score === 1 ? "correcta" : "correctas"}`;
             b.classList.add(ok ? "right" : "wrong");
             opts.children[q.answer].classList.add("right");
             const w = $("#quiz-why"); w.hidden = false;
@@ -269,7 +280,7 @@
         speak($("#quiz-score").textContent);
       };
       show();
-    })();
+    };
   }
 
   // ---------------- Formulario ----------------
