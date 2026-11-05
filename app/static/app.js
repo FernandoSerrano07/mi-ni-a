@@ -114,6 +114,29 @@
     setInterval(() => { if (document.visibilityState === "visible") location.reload(); }, 60000);
   }
 
+  // ---------------- Anotar en 5 segundos ----------------
+  const qi = $("#quick-input");
+  if (qi) {
+    $$(".quick .hint").forEach((h) => h.onclick = () => { qi.value = h.textContent; qi.focus(); });
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const mic = $("#quick-mic");
+    if (SR && mic) {
+      mic.hidden = false;
+      mic.onclick = () => {
+        const rec = new SR();
+        rec.lang = "es-SV"; rec.interimResults = true; rec.maxAlternatives = 1;
+        mic.classList.add("on");
+        rec.onresult = (e) => { qi.value = Array.from(e.results).map((r) => r[0].transcript).join(" "); };
+        rec.onend = () => mic.classList.remove("on");
+        rec.onerror = () => mic.classList.remove("on");
+        rec.start();
+      };
+    }
+  }
+
+  // ---------------- Notitas ----------------
+  $$(".note-idea").forEach((b) => b.onclick = () => { const t = $('textarea[name="texto"]'); if (t) t.value = b.textContent.trim(); });
+
   // ---------------- Formulario ----------------
   const form = $("#rem-form");
   if (!form) return;
@@ -123,7 +146,24 @@
 
   const fmt = (h, m) => { const ap = h >= 12 ? "p. m." : "a. m."; return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${ap}`; };
 
+  const kindRadios = $$('input[name="tipo"]');
+  const kind = () => (kindRadios.find((r) => r.checked) || {}).value;
+  const HELP = {
+    reminder: "Te aviso a la hora que elijas y, si no lo marcas, insisto.",
+    checkin: "Una pregunta como “¿terminaste la tarea?”: insiste hasta que respondas “Sí, ya”.",
+    exam: "Pon el día del examen y cada día te pregunto si estudiaste, con cuenta regresiva 📚",
+  };
+  kindRadios.forEach((r) => r.addEventListener("change", refresh));
+
   function refresh() {
+    const isExam = kind() === "exam";
+    $("#bloque-examen").hidden = !isExam;
+    $("fieldset.aviso").hidden = isExam;
+    $("#bloque-repetir").hidden = isExam;
+    $$(".lbl-normal").forEach((e) => e.hidden = isExam);
+    $$(".lbl-exam").forEach((e) => e.hidden = !isExam);
+    $("#tipo-help").textContent = HELP[kind()] || "";
+    if (isExam) { exact.required = false; prev.textContent = ""; return; }
     const hasEvent = !!ev.value;
     if (!hasEvent && mode() === "antes") modeRadios.find((r) => r.value === "exacta").checked = true;
     modeRadios.find((r) => r.value === "antes").disabled = !hasEvent;
@@ -154,6 +194,7 @@
     const d = c.dataset;
     $("#titulo").value = d.t;
     const k = $(`input[name="tipo"][value="${d.k}"]`); if (k) k.checked = true;
+    if (d.k === "exam") { ev.value = ""; refresh(); return; }
     if (d.ev) { ev.value = d.ev; mins.value = d.min || 20; modeRadios.find((r) => r.value === "antes").checked = true; }
     else { ev.value = ""; exact.value = d.ex || ""; modeRadios.find((r) => r.value === "exacta").checked = true; }
     if (d.rep) $("#repetir").value = d.rep;

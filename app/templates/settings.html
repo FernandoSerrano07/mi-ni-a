@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "_deco.html" import penguin, gerbera, tulip, garden, kitten %}
+{% block title %}Ajustes{% endblock %}
+{% block content %}
+<a href="{{ url_for('main.index') }}" class="back">← Volver</a>
+<div class="form-head">
+  <h1>Ajustes</h1>
+  {{ penguin("hola", 64) }}
+</div>
+
+<form method="post" class="card form">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <input type="hidden" name="accion" value="resumenes">
+  <label class="switch"><input type="checkbox" name="resumen" {{ 'checked' if current_user.wants_summary }}>
+    ☀️ Resumen de la mañana con lo que tengo hoy</label>
+  <label>A las
+    <input type="time" name="hora_resumen" value="{{ current_user.summary_time or '07:00' }}">
+  </label>
+  <label class="switch"><input type="checkbox" name="semanal" {{ 'checked' if current_user.wants_weekly }}>
+    🏆 Resumen del domingo (7 p. m.) con lo que cumplí en la semana</label>
+  <button class="btn primary big">Guardar</button>
+</form>
+
+<div class="card form" style="margin-top:14px">
+  <b>Probar ahora</b>
+  <div class="row">
+    <form method="post" action="{{ url_for('main.summary_test') }}">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}"><input type="hidden" name="tipo" value="dia">
+      <button class="btn" style="width:100%">☀️ Resumen del día</button>
+    </form>
+    <form method="post" action="{{ url_for('main.summary_test') }}">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}"><input type="hidden" name="tipo" value="semana">
+      <button class="btn" style="width:100%">🏆 Resumen semanal</button>
+    </form>
+  </div>
+</div>
+
+<h2 class="sec">🔒 Cambiar contraseña</h2>
+<form method="post" class="card form">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <input type="hidden" name="accion" value="password">
+  <label>Contraseña actual <input type="password" name="actual" autocomplete="current-password" required></label>
+  <label>Nueva contraseña <input type="password" name="nueva" autocomplete="new-password" required minlength="4"></label>
+  <label>Repite la nueva <input type="password" name="repetir" autocomplete="new-password" required minlength="4"></label>
+  <button class="btn primary big">Cambiar contraseña</button>
+</form>
+
+{{ garden() }}
+{% endblock %}

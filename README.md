@@ -15,6 +15,11 @@ App web (Python + Flask) que se instala en el teléfono como una app y envía **
 - **Repetir**: diario, lunes a viernes o semanal (ideal para el colegio).
 - **Notificaciones que se notan**: se quedan en pantalla hasta tocarlas, vibran fuerte, vuelven a sonar en cada seguimiento y llevan prioridad alta.
 - **Lectura en voz alta** (opcional): si la app está abierta, lee el recordatorio en voz alta.
+- **Anotar en 5 segundos**: escribe o dicta 🎤 «mañana 11 ir por la sobrina, avísame 20 antes» y la app lo entiende sola.
+- **Modo examen 📚**: pon el día del parcial y cada día pregunta «¿estudiaste hoy?» con cuenta regresiva.
+- **Resumen de la mañana ☀️** (7:00 por defecto) con lo del día, y **resumen del domingo 🏆** con lo cumplido.
+- **Notitas 💌**: escribe notitas sorpresa; le llega una a la otra persona cuando cumple algo (máx. 1 por día).
+- **Limpieza automática**: los terminados se borran solos al cuarto día.
 - Diseño morado con tulipanes, gerberas y pingüinos (ilustraciones propias en SVG, sin imágenes externas).
 - Modo oscuro automático.
 

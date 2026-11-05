@@ -16,6 +16,7 @@
   <button type="button" class="chip" data-t="¿Terminaste tu tarea de matemática?" data-k="checkin" data-ex="19:00">📐 ¿Tarea de mate?</button>
   <button type="button" class="chip" data-t="¿Ya estudiaste para tu parcial del sábado?" data-k="checkin" data-ex="18:00" data-rep="daily">📚 ¿Estudiaste?</button>
   <button type="button" class="chip" data-t="Tomar agua 💧" data-k="reminder" data-ex="10:00" data-rep="daily">💧 Agua</button>
+  <button type="button" class="chip" data-t="Parcial de matemática" data-k="exam">🎓 Examen</button>
 </div>
 {% endif %}
 
@@ -31,7 +32,7 @@
     <label class="seg-opt"><input type="radio" name="tipo" value="{{ k }}" {{ 'checked' if v.tipo == k }}> {{ label }}</label>
     {% endfor %}
   </div>
-  <p class="muted small" id="tipo-help">Las preguntas de seguimiento insisten hasta que respondas “Sí, ya lo hice”.</p>
+  <p class="muted small" id="tipo-help"></p>
 
   <label>Para
     <select name="para">
@@ -40,13 +41,28 @@
   </label>
 
   <div class="row">
-    <label>Día
+    <label><span class="lbl-normal">Día</span><span class="lbl-exam" hidden>Día del examen</span>
       <input type="date" name="fecha" value="{{ v.fecha }}" required>
     </label>
     <label>¿A qué hora es? <span class="muted small">(opcional)</span>
       <input type="time" name="hora_evento" id="hora_evento" value="{{ v.hora_evento }}">
     </label>
   </div>
+
+  <fieldset class="exam-box" id="bloque-examen" hidden>
+    <legend>📚 Cuenta regresiva</legend>
+    <p class="muted small">Cada día te pregunto “¿estudiaste hoy?” y te digo cuántos días faltan, hasta el día del examen.</p>
+    <div class="row">
+      <label>Empezar
+        <select name="dias_antes">
+          {% for n in [1, 2, 3, 4, 5, 7, 10, 14] %}<option value="{{ n }}" {{ 'selected' if v.dias_antes == n|string }}>{{ n }} {{ 'día' if n == 1 else 'días' }} antes</option>{% endfor %}
+        </select>
+      </label>
+      <label>Preguntarme a las
+        <input type="time" name="hora_pregunta" value="{{ v.hora_pregunta }}">
+      </label>
+    </div>
+  </fieldset>
 
   <fieldset class="aviso">
     <legend>¿Cuándo te aviso?</legend>
@@ -71,7 +87,7 @@
     <p class="preview" id="preview"></p>
   </fieldset>
 
-  <label>Repetir
+  <label id="bloque-repetir">Repetir
     <select name="repetir" id="repetir">
       {% for k, label in REPEAT_CHOICES.items() %}<option value="{{ k }}" {{ 'selected' if v.repetir == k }}>{{ label }}</option>{% endfor %}
     </select>

@@ -9,6 +9,10 @@ function actionsFor(kind) {
     { action: "done", title: "✓ Ya lo hice" },
     { action: "snooze", title: "⏰ 10 min más" },
   ];
+  if (kind === "exam") return [
+    { action: "done", title: "✓ Sí estudié" },
+    { action: "snooze", title: "⏰ Más tarde" },
+  ];
   if (kind === "checkin") return [
     { action: "done", title: "✓ Sí, ya" },
     { action: "snooze", title: "Todavía no" },

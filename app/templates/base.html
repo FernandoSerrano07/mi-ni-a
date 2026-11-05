@@ -20,12 +20,13 @@
     {% if current_user.is_authenticated %}
     <header class="top">
       <a href="{{ url_for('main.index') }}" class="brand">{{ penguin("feliz", 38, "brand-peng") }}<span>Sr. Patroclo 💜</span></a>
-      <span class="hello">Hola, {{ current_user.display_name }} {{ gerbera("#f472b6", size=22, stem=False) }}</span>
+      <span class="hello">Hola, {{ current_user.display_name }}
+        <a href="{{ url_for('main.notes') }}" class="hdr-note" aria-label="Notitas">💌</a></span>
     </header>
     {% endif %}
 
     {% with msgs = get_flashed_messages(with_categories=true) %}
-      {% for cat, m in msgs %}<div class="flash {{ cat }}">{% if cat == 'ok' %}{{ penguin("feliz", 30) }}{% endif %}<span>{{ m }}</span></div>{% endfor %}
+      {% for cat, m in msgs %}<div class="flash {{ cat }}">{% if cat == 'note' %}{{ kitten("sentado", "crema", 34) }}{% elif cat == 'ok' %}{{ penguin("feliz", 30) }}{% endif %}<span>{{ m }}</span></div>{% endfor %}
     {% endwith %}
 
     <main>{% block content %}{% endblock %}</main>

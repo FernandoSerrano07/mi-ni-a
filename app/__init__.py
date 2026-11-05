@@ -36,6 +36,7 @@ def create_app(config_overrides: dict | None = None, start_scheduler: bool = Fal
 
     with app.app_context():
         db.create_all()
+        _auto_migrate()
         _bootstrap_users(app)
 
     _register_cli(app)
@@ -46,6 +47,33 @@ def create_app(config_overrides: dict | None = None, start_scheduler: bool = Fal
         start_scheduler(app)
 
     return app
+
+
+def _auto_migrate() -> None:
+    """Agrega columnas nuevas a tablas que ya existen (create_all no lo hace).
+    Así se puede actualizar la app sin perder los datos guardados."""
+    from sqlalchemy import inspect, text
+
+    insp = inspect(db.engine)
+    dialect = db.engine.dialect
+    with db.engine.begin() as conn:
+        for table in db.metadata.sorted_tables:
+            if not insp.has_table(table.name):
+                continue
+            existing = {c["name"] for c in insp.get_columns(table.name)}
+            for col in table.columns:
+                if col.name in existing:
+                    continue
+                ddl = f'ALTER TABLE "{table.name}" ADD COLUMN "{col.name}" {col.type.compile(dialect=dialect)}'
+                d = col.default.arg if (col.default is not None and col.default.is_scalar) else None
+                if isinstance(d, bool):
+                    ddl += " DEFAULT " + ("TRUE" if d else "FALSE")
+                elif isinstance(d, (int, float)):
+                    ddl += f" DEFAULT {d}"
+                elif isinstance(d, str):
+                    ddl += " DEFAULT '" + d.replace("'", "''") + "'"
+                conn.execute(text(ddl))
+                logging.getLogger(__name__).info("Migración: columna %s.%s agregada", table.name, col.name)
 
 
 def _bootstrap_users(app: Flask) -> None:

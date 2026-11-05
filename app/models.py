@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
@@ -19,7 +19,23 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=utcnow)
 
+    # Resúmenes
+    summary_enabled = db.Column(db.Boolean, default=True)   # resumen de la mañana
+    summary_time = db.Column(db.String(5), default="07:00")
+    weekly_enabled = db.Column(db.Boolean, default=True)    # resumen del domingo
+    last_summary_date = db.Column(db.Date, nullable=True)
+    last_weekly_date = db.Column(db.Date, nullable=True)
+    last_note_date = db.Column(db.Date, nullable=True)      # última notita sorpresa recibida
+
     subscriptions = db.relationship("PushSubscription", backref="user", cascade="all, delete-orphan")
+
+    @property
+    def wants_summary(self) -> bool:
+        return self.summary_enabled is not False
+
+    @property
+    def wants_weekly(self) -> bool:
+        return self.weekly_enabled is not False
 
     def set_password(self, password: str) -> None:
         self.password_hash = generate_password_hash(password)
@@ -49,7 +65,8 @@ REPEAT_CHOICES = {
 
 KIND_CHOICES = {
     "reminder": "Recordatorio",   # "Ir por la sobrina al colegio"
-    "checkin": "Pregunta de seguimiento",  # "¿Ya estudiaste para el parcial?"
+    "checkin": "Pregunta",        # "¿Terminaste tu tarea de matemática?"
+    "exam": "Examen 📚",          # cuenta regresiva diaria hasta el parcial
 }
 
 
@@ -105,10 +122,27 @@ class Reminder(db.Model):
         if self.repeat == "none":
             return False
         now = now or utcnow()
-        lead = (self.event_at - self.notify_at) if self.event_at else None
         nxt = self._advance_once(self.notify_at, local_tz)
         while nxt <= now:
             nxt = self._advance_once(nxt, local_tz)
+
+        if self.kind == "exam" and self.event_at:
+            exam_day = self.event_at.replace(tzinfo=timezone.utc).astimezone(local_tz).date()
+            if nxt.replace(tzinfo=timezone.utc).astimezone(local_tz).date() > exam_day:
+                # Ya pasó el examen: termina la cuenta regresiva
+                self.status = "done"
+                self.done_at = utcnow()
+                self.next_fire_at = None
+                self.sent_count = 0
+                return True
+            self.notify_at = nxt
+            self.next_fire_at = nxt
+            self.sent_count = 0
+            self.status = "pending"
+            self.done_at = None
+            return True
+
+        lead = (self.event_at - self.notify_at) if self.event_at else None
         self.notify_at = nxt
         if lead is not None:
             self.event_at = nxt + lead
@@ -120,6 +154,7 @@ class Reminder(db.Model):
 
     def mark_done(self, local_tz) -> None:
         self.done_count = (self.done_count or 0) + 1
+        db.session.add(Activity(user_id=self.owner_id, title=self.title, kind="done"))
         if not self.schedule_next_occurrence(local_tz):
             self.status = "done"
             self.done_at = utcnow()
@@ -128,3 +163,27 @@ class Reminder(db.Model):
     def snooze(self, minutes: int = 10) -> None:
         self.status = "pending"
         self.next_fire_at = utcnow() + timedelta(minutes=minutes)
+
+
+class Activity(db.Model):
+    """Historial corto (para el resumen del domingo): qué se cumplió y qué no."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    title = db.Column(db.String(200), nullable=False)
+    kind = db.Column(db.String(10), nullable=False)  # done | missed
+    at = db.Column(db.DateTime, default=utcnow, index=True)
+
+
+class Note(db.Model):
+    """Notitas sorpresa: una persona las escribe y a la otra le llegan al cumplir algo."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    author_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    recipient_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    text = db.Column(db.String(300), nullable=False)
+    created_at = db.Column(db.DateTime, default=utcnow)
+    delivered_at = db.Column(db.DateTime, nullable=True)
+
+    author = db.relationship("User", foreign_keys=[author_id])
+    recipient = db.relationship("User", foreign_keys=[recipient_id])

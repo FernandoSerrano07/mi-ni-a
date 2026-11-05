@@ -144,3 +144,25 @@ legend { font-weight: 700; padding: 0 6px; }
 .rem-title .book { margin-top: -3px; }
 .kitten.sentado .tail { transform-origin: 70px 96px; animation: tail 2.4s ease-in-out infinite alternate; }
 @keyframes tail { from { transform: rotate(-6deg); } to { transform: rotate(8deg); } }
+
+/* Anotar en 5 segundos */
+.quick { background: var(--card); border: 2px solid var(--brand-2); border-radius: var(--radius); padding: 12px; margin: 12px 0 4px; box-shadow: var(--shadow); }
+.quick-label { font-weight: 700; color: var(--brand-dark); margin-bottom: 6px; }
+@media (prefers-color-scheme: dark) { .quick-label { color: var(--brand-2); } }
+.quick-row { display: flex; gap: 6px; }
+.quick-row input { flex: 1; min-width: 0; }
+.quick-go { padding: 9px 12px; }
+.quick-mic { border: 1px solid var(--line); background: var(--bg); border-radius: 12px; font-size: 1.2rem; padding: 0 10px; cursor: pointer; }
+.quick-mic.on { background: var(--hot); animation: pulse 1s infinite; }
+.quick-hints { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.hint { border: 1px dashed var(--brand-2); background: transparent; color: var(--brand-dark); border-radius: 999px; padding: 3px 9px; font: inherit; font-size: .78rem; cursor: pointer; }
+@media (prefers-color-scheme: dark) { .hint { color: var(--brand-2); } }
+
+/* Notitas */
+.hdr-note { font-size: 1.25rem; margin-left: 4px; }
+.flash.note { border-color: #f472b6; background: #fdf2f8; font-weight: 600; }
+@media (prefers-color-scheme: dark) { .flash.note { background: #3b1d33; } }
+.rem.note { border-left-color: #f472b6; }
+.rem.note .rem-notes { font-size: 1.05rem; font-style: italic; margin: 0; }
+.rem.note.received { background: linear-gradient(135deg, var(--card), var(--soft)); opacity: 1; }
+.exam-box { border-color: var(--brand-2); background: var(--soft); }

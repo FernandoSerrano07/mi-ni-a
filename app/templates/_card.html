@@ -5,11 +5,15 @@
   <span class="rem-flower">{{ gerbera(colores[r.id % 5], size=34, stem=False) }}</span>
   <div class="rem-main">
     <div class="rem-title">
-      {% if r.kind == 'checkin' %}{{ book("#8b5cf6", 22) }}{% else %}📌{% endif %} {{ r.title }}
+      {% if r.kind == 'exam' %}🎓{% elif r.kind == 'checkin' %}{{ book("#8b5cf6", 22) }}{% else %}📌{% endif %} {{ r.title }}
     </div>
     <div class="rem-meta">
       {% if estado == 'done' %}
         Hecho {{ r.done_at|dia|lower }} a las {{ r.done_at|hora }}
+      {% elif r.kind == 'exam' and r.event_at %}
+        {% set d = dias_para(r.event_at) %}
+        Examen {{ r.event_at|dia|lower }}{% if d > 1 %} · <b>faltan {{ d }} días</b>{% elif d == 1 %} · <b>¡es mañana!</b>{% elif d == 0 %} · <b>¡es hoy! 💜</b>{% endif %}
+        · pregunta diaria {{ r.notify_at|hora }}
       {% else %}
         {{ r.notify_at|dia }} · aviso {{ r.notify_at|hora }}
         {% if r.event_at %} · es a las <b>{{ r.event_at|hora }}</b>{% endif %}
@@ -18,7 +22,8 @@
     <div class="rem-tags">
       {% if ver == 'todos' or r.owner_id != current_user.id %}<span class="tag">Para {{ r.owner.display_name }}</span>{% endif %}
       {% if r.created_by_id != r.owner_id %}<span class="tag soft">De {{ r.created_by.display_name }}</span>{% endif %}
-      {% if r.repeat != 'none' %}<span class="tag soft">🔁 {{ REPEAT_CHOICES[r.repeat] }}</span>{% endif %}
+      {% if r.repeat != 'none' and r.kind != 'exam' %}<span class="tag soft">🔁 {{ REPEAT_CHOICES[r.repeat] }}</span>{% endif %}
+      {% if r.kind == 'exam' and r.done_count %}<span class="tag soft">📖 estudió {{ r.done_count }} {{ 'día' if r.done_count == 1 else 'días' }}</span>{% endif %}
       {% if estado == 'sonando' %}<span class="tag hot">Avisado {{ r.sent_count }} {{ 'vez' if r.sent_count == 1 else 'veces' }}</span>{% endif %}
       {% if r.followup_every_min and estado == 'proximo' %}<span class="tag soft">insiste c/{{ r.followup_every_min }} min</span>{% endif %}
     </div>
@@ -28,7 +33,7 @@
     {% if estado in ('sonando', 'proximo', 'missed') %}
       <form method="post" action="{{ url_for('main.reminder_action', rid=r.id, accion='hecho') }}">
         <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
-        <button class="btn ok">✓ Hecho</button>
+        <button class="btn ok">{{ '✓ Sí estudié hoy' if r.kind == 'exam' else '✓ Hecho' }}</button>
       </form>
     {% endif %}
     {% if estado == 'sonando' %}

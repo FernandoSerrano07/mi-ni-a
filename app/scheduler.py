@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 from flask import current_app
 
-from .models import Reminder, db, utcnow
+from .models import Activity, Reminder, db, utcnow
 from .push import make_action_token, send_to_user
 
 log = logging.getLogger(__name__)
@@ -31,6 +31,21 @@ def fmt_local(dt) -> str:
 
 
 def build_payload(r: Reminder, is_followup: bool) -> dict:
+    if r.kind == "exam" and r.event_at:
+        from datetime import datetime
+        from .extras import days_until
+        d = days_until(r.event_at, local_tz(), datetime.now(local_tz()))
+        if d <= 0:
+            title, body = f"💜 ¡Hoy es: {r.title}!", "Respira, confía en ti y a darle. ¡Tú puedes! 🐧"
+        elif d == 1:
+            title, body = f"📚 Mañana es: {r.title}", "Último repasito hoy. ¿Ya estudiaste? 💪"
+        else:
+            title, body = f"📚 Faltan {d} días: {r.title}", "¿Estudiaste hoy? Aunque sea un ratito 💪"
+        if is_followup:
+            title = f"{random.choice(FOLLOWUP_PREFIXES)} {title}"
+        return {"title": title, "body": body, "tag": f"reminder-{r.id}", "reminder_id": r.id, "kind": "exam",
+                "token": make_action_token(r.id, r.owner_id), "url": f"/?r={r.id}", "speak": title}
+
     body_parts = []
     if r.event_at:
         body_parts.append(f"⏰ Es a las {fmt_local(r.event_at)}")
@@ -93,6 +108,7 @@ def process_due_reminders(now=None) -> int:
 
         if exhausted:
             # Ya insistimos todas las veces y no respondió
+            db.session.add(Activity(user_id=r.owner_id, title=r.title, kind="missed", at=now))
             if r.notify_creator_on_miss and r.created_by_id != r.owner_id:
                 send_to_user(r.created_by, {
                     "title": f"⚠️ {r.owner.display_name} no confirmó: {r.title}",
@@ -120,11 +136,22 @@ def process_due_reminders(now=None) -> int:
     if due:
         log.info("Procesados %d recordatorios", len(due))
 
+    # Resúmenes (de la mañana y del domingo)
+    from .extras import cleanup_activity, send_morning_summaries, send_weekly_summaries
+    try:
+        send_morning_summaries(now, tz)
+        send_weekly_summaries(now, tz)
+    except Exception:  # noqa: BLE001 — que un resumen fallido no frene los recordatorios
+        db.session.rollback()
+        log.exception("Fallo enviando resúmenes")
+
     # Limpieza automática, una vez por hora
     global _last_cleanup
     if _last_cleanup is None or now - _last_cleanup >= timedelta(hours=1):
         _last_cleanup = now
         cleanup_old_reminders(now)
+        cleanup_activity(now)
+        db.session.commit()
     return len(due)
 
 

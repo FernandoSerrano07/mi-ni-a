@@ -13,6 +13,22 @@
   <button id="push-enable" class="btn primary">Activar</button>
 </section>
 
+<form method="post" action="{{ url_for('main.quick_add') }}" class="quick" id="quick">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <label for="quick-input" class="quick-label">✍️ Anota en 5 segundos</label>
+  <div class="quick-row">
+    <input id="quick-input" name="texto" value="{{ rapido_texto }}" autocomplete="off" required
+           placeholder="mañana 11 ir por la sobrina, avísame 20 antes">
+    <button type="button" class="quick-mic" id="quick-mic" hidden aria-label="Dictar">🎤</button>
+    <button class="btn primary quick-go" aria-label="Anotar">Anotar</button>
+  </div>
+  <div class="quick-hints muted small">
+    Prueba: <button type="button" class="hint">en 20 minutos sacar la ropa</button>
+    <button type="button" class="hint">el sábado a las 3 pm cumpleaños de mamá</button>
+    <button type="button" class="hint">todos los días 9 de la noche tomar la pastilla</button>
+  </div>
+</form>
+
 <nav class="tabs">
   {{ kitten("asomado", "naranja", 62, "peek-cat") }}
   <a href="?ver=mios" class="{{ 'on' if ver == 'mios' }}">Míos</a>
@@ -52,6 +68,8 @@
   <div class="card settings-card">
     {{ kitten("durmiendo", "crema", 70, "settings-cat") }}
     <label class="switch"><input type="checkbox" id="voice-toggle"> Leer en voz alta los recordatorios cuando la app esté abierta</label>
+    <a class="btn" href="{{ url_for('main.settings') }}">☀️ Resúmenes y contraseña</a>
+    <a class="btn" href="{{ url_for('main.notes') }}">💌 Notitas</a>
     <button id="push-test" class="btn">Enviar notificación de prueba</button>
     <p class="muted small" id="push-status"></p>
     <form method="post" action="{{ url_for('main.logout') }}">

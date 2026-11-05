@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% from "_deco.html" import penguin, gerbera, tulip, garden, kitten %}
+{% block title %}Notitas 💌{% endblock %}
+{% block content %}
+<a href="{{ url_for('main.index') }}" class="back">← Volver</a>
+<div class="form-head">
+  <h1>💌 Notitas</h1>
+  {{ kitten("sentado", "crema", 56) }}
+</div>
+<p class="muted">Escribe notitas bonitas. Cuando la otra persona cumpla un recordatorio, le llega una de sorpresa (máximo una por día).</p>
+
+{% if others %}
+<form method="post" class="card form">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <label>Para
+    <select name="para">{% for u in others %}<option value="{{ u.id }}">{{ u.display_name }}</option>{% endfor %}</select>
+  </label>
+  <label>Notita
+    <textarea name="texto" rows="3" maxlength="300" required placeholder="Estoy muy orgulloso de ti 💜"></textarea>
+  </label>
+  <div class="chips">
+    <span class="muted small">Ideas:</span>
+    {% for idea in ["Estoy orgulloso de ti 💜", "Eres increíble, mi niña 🌷", "Te quiero mucho 🐧", "¡Así se hace! Te invito un helado 🍦", "Cada día me enamoras más 💌"] %}
+    <button type="button" class="chip note-idea">{{ idea }}</button>
+    {% endfor %}
+  </div>
+  <button class="btn primary big">Guardar notita 💌</button>
+</form>
+{% endif %}
+
+{% if mine %}
+<h2 class="sec">Las que escribiste</h2>
+{% for n in mine %}
+<article class="rem note {{ 'done' if n.delivered_at }}">
+  <div class="rem-notes">“{{ n.text }}”</div>
+  <div class="rem-meta">Para {{ n.recipient.display_name }} ·
+    {% if n.delivered_at %}✅ le llegó {{ n.delivered_at|dia|lower }}{% else %}⏳ esperando su momento{% endif %}</div>
+  {% if not n.delivered_at %}
+  <div class="rem-actions">
+    <form method="post" action="{{ url_for('main.delete_note', nid=n.id) }}">
+      <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+      <button class="btn ghost">Borrar</button>
+    </form>
+  </div>
+  {% endif %}
+</article>
+{% endfor %}
+{% endif %}
+
+<h2 class="sec">💝 Las que te han llegado</h2>
+{% for n in received %}
+<article class="rem note received">
+  <div class="rem-notes">“{{ n.text }}”</div>
+  <div class="rem-meta">De {{ n.author.display_name }} · {{ n.delivered_at|dia }}</div>
+</article>
+{% else %}
+<div class="empty">{{ penguin("feliz", 80) }}<span class="muted">Cumple tus recordatorios y te irán llegando sorpresas 😉</span></div>
+{% endfor %}
+
+{{ garden() }}
+{% endblock %}

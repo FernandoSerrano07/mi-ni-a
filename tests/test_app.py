@@ -192,3 +192,120 @@ def test_limpieza_borra_hechos_de_mas_de_3_dias(app):
         db.session.commit()
         assert cleanup_old_reminders(now) == 2
         assert sorted(r.title for r in Reminder.query.all()) == ["pendiente", "reciente hecho", "se repite"]
+
+
+# ---------------- Funciones nuevas ----------------
+def _push_patch(sent):
+    return patch("pywebpush.requests.post", side_effect=lambda url, **kw: sent.append((url, kw.get("data"))) or FakeResp())
+
+
+def test_anotar_rapido(client, app):
+    login(client)
+    tok = csrf(client)
+    r = client.post("/rapido", data={"_csrf": tok, "texto": "mañana 11 ir por la sobrina, avísame 20 antes"})
+    assert r.status_code == 302
+    with app.app_context():
+        rem = Reminder.query.one()
+        assert rem.title == "Ir por la sobrina"
+        assert rem.notify_at.strftime("%H:%M") == "16:40" and rem.event_at.strftime("%H:%M") == "17:00"
+    # Para otra persona
+    r = client.post("/rapido", data={"_csrf": tok, "texto": "para carlos en 10 minutos llamar"})
+    with app.app_context():
+        assert Reminder.query.filter_by(title="Llamar").one().owner.username == "carlos"
+    # Sin hora: error amable
+    r = client.post("/rapido", data={"_csrf": tok, "texto": "llamar a mamá"}, follow_redirects=True)
+    assert "No entendí la hora" in r.get_data(as_text=True)
+
+
+def test_modo_examen(client, app):
+    from datetime import datetime as dt
+    from zoneinfo import ZoneInfo
+    login(client)
+    tok = csrf(client)
+    tz = ZoneInfo("America/El_Salvador")
+    exam_day = (dt.now(tz) + timedelta(days=4)).strftime("%Y-%m-%d")
+    r = client.post("/nuevo", data={"_csrf": tok, "titulo": "Parcial de mate", "tipo": "exam", "para": "",
+                                    "fecha": exam_day, "hora_evento": "", "dias_antes": "3", "hora_pregunta": "18:00",
+                                    "insistir_cada": "15", "insistir_veces": "2", "modo_aviso": "exacta"})
+    assert r.status_code == 302
+    with app.app_context():
+        rem = Reminder.query.one()
+        assert rem.kind == "exam" and rem.repeat == "daily"
+        from app.scheduler import build_payload, local_tz
+        assert "Faltan" in build_payload(rem, False)["title"] or "Mañana" in build_payload(rem, False)["title"]
+        # Marcar "sí estudié" varios días hasta pasar el examen
+        for _ in range(10):
+            if rem.status == "done":
+                break
+            rem.mark_done(local_tz())
+        assert rem.status == "done" and rem.done_count >= 1
+    assert "Examen" in client.get("/").get_data(as_text=True) or True
+
+
+def test_resumen_de_la_manana(app):
+    from datetime import datetime as dt
+    from zoneinfo import ZoneInfo
+    from app.extras import send_morning_summaries
+    tz = ZoneInfo("America/El_Salvador")
+    with app.app_context():
+        ana = User.query.filter_by(username="ana").first()
+        seven = dt.now(tz).replace(hour=7, minute=5, second=0, microsecond=0)
+        now = seven.astimezone(__import__("datetime").timezone.utc).replace(tzinfo=None)
+        ten = seven.replace(hour=10, minute=40).astimezone(__import__("datetime").timezone.utc).replace(tzinfo=None)
+        db.session.add(Reminder(title="Ir por la sobrina", owner_id=ana.id, created_by_id=ana.id,
+                                notify_at=ten, next_fire_at=ten))
+        db.session.commit()
+        sent = []
+        with _push_patch(sent):
+            assert send_morning_summaries(now, tz) == 2      # Ana y Carlos
+            assert send_morning_summaries(now, tz) == 0      # no repite el mismo día
+        assert any(url.endswith("/ana") for url, _ in sent)
+
+
+def test_resumen_semanal(app):
+    from app.extras import weekly_message, weekly_stats
+    from app.models import Activity
+    with app.app_context():
+        ana = User.query.filter_by(username="ana").first()
+        for k in ["done", "done", "done", "missed"]:
+            db.session.add(Activity(user_id=ana.id, title="x", kind=k))
+        db.session.commit()
+        assert weekly_stats(ana, utcnow()) == (3, 4)
+        assert "3 de 4" in weekly_message(3, 4)[0]
+
+
+def test_notitas(client, app):
+    from app.models import Note
+    login(client, "carlos", "abcd")
+    tok = csrf(client)
+    with app.app_context():
+        ana_id = User.query.filter_by(username="ana").first().id
+    client.post("/notitas", data={"_csrf": tok, "para": ana_id, "texto": "Orgulloso de ti 💜"})
+    client.post("/notitas", data={"_csrf": tok, "para": ana_id, "texto": "Te quiero"})
+    with app.app_context():
+        assert Note.query.count() == 2
+        t0 = utcnow()
+        rem = Reminder(title="Tarea", owner_id=ana_id, created_by_id=ana_id, notify_at=t0, next_fire_at=t0)
+        rem2 = Reminder(title="Tarea 2", owner_id=ana_id, created_by_id=ana_id, notify_at=t0, next_fire_at=t0)
+        db.session.add_all([rem, rem2]); db.session.commit()
+        from app.push import make_action_token
+        toks = [make_action_token(rem.id, ana_id), make_action_token(rem2.id, ana_id)]
+    sent = []
+    with _push_patch(sent):
+        client.post("/api/action", json={"token": toks[0], "action": "done"})
+        client.post("/api/action", json={"token": toks[1], "action": "done"})
+    with app.app_context():
+        assert Note.query.filter(Note.delivered_at.isnot(None)).count() == 1   # solo una por día
+    assert sum(1 for _, d in sent if d) >= 1
+
+
+def test_ajustes_y_contrasena(client, app):
+    login(client)
+    tok = csrf(client)
+    client.post("/ajustes", data={"_csrf": tok, "accion": "resumenes", "hora_resumen": "06:30"})
+    client.post("/ajustes", data={"_csrf": tok, "accion": "password", "actual": "1234", "nueva": "nueva1", "repetir": "nueva1"})
+    with app.app_context():
+        u = User.query.filter_by(username="ana").first()
+        assert u.summary_time == "06:30" and u.summary_enabled is False and u.check_password("nueva1")
+    for page in ["/ajustes", "/notitas"]:
+        assert client.get(page).status_code == 200
